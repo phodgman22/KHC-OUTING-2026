@@ -4112,20 +4112,6 @@ function formatSettingsHTML(){
       <select id="fmtpct" class="statsel" ${locked ? "disabled" : ""}>${pctOpts}</select>
     </div>`;
 }
-/** Every player's own tee choice — not admin-gated, since each man picks his
-    own. Locks with the same anyMatchBegun() rule as the allowance % above so
-    a mid-round change can't quietly shift someone's strokes. */
-function myTeeHTML(){
-  const tees = Object.keys(COURSES[ROUNDS[0].course].tees);
-  const mine = Store.playerTee(Session.id), locked = anyMatchBegun();
-  const opts = tees.map(t => `<option value="${esc(t)}"${
-    mine === t ? " selected" : ""}>${esc(t)}</option>`).join("");
-  return `<div class="fmtrow">
-      <label for="mytee">Your tee</label>
-      <select id="mytee" class="statsel" ${locked ? "disabled" : ""}>${opts}</select>
-    </div>${locked ? `<p style="margin:6px 0 10px;color:var(--dim);font-size:11.5px">
-      Locked &mdash; scoring has started.</p>` : ""}`;
-}
 
 /* ---------- menu ---------- */
 function viewSheet(){
@@ -4146,10 +4132,6 @@ function viewSheet(){
     <div class="mycode"><div class="mck">Your login code</div>
       <div class="mcv mono">${Session.me.code}</div>
       <div class="mch">Write this down. It's how you get back in if you're ever signed out.</div></div>
-    <div class="sect" style="margin-top:4px">Your tee</div>
-    <p style="margin-bottom:10px;color:var(--muted);font-size:12.5px;line-height:1.55">
-      Sets which tee's rating/slope your course handicap is calculated from.</p>
-    ${myTeeHTML()}
     ${codes}
     ${Session.admin ? formatSettingsHTML() : ""}
     ${Session.admin ? `<div class="sect" style="margin-top:4px">Backup</div>
@@ -4443,7 +4425,11 @@ function wire(){
     const to = el.dataset.to;
     if (to !== Session.id && !confirm(`Hand scoring to ${PLAYERS[to].n}?\n\n`
       + `${PLAYERS[to].n} enters the scores from their own phone.`)) return;
-    Store.setScorer(el.dataset.give, to); render();
+    Store.setScorer(el.dataset.give, to);
+    // Claiming for yourself jumps straight to tee confirmation — that's the
+    // first step of scoring now, not a screen you have to dig for.
+    if (to === Session.id) V.view = "match";
+    render(); window.scrollTo(0, 0);
   });
   document.querySelectorAll("[data-briefopen]").forEach(el => el.onclick = () => {
     V.briefOpen = !V.briefOpen; render();
@@ -4495,12 +4481,6 @@ function wire(){
     Store.setSettings({pct: (+fmtPct.value) / 100}, Session.id);
     showToast(`Allowance set to ${fmtPct.value}%`);
   };
-  const myTee = document.querySelector("#mytee");
-  if (myTee) myTee.onchange = () => {
-    Store.setPlayerTee(Session.id, myTee.value, Session.id);
-    showToast(`Your tee set to ${esc(myTee.value)}`);
-  };
-
   /* --- gross score inputs -------------------------------------------------
      Writes are "silent" (no re-render) so the keyboard stays open and the
      caret doesn't jump. The derived numbers are patched in place instead. */
