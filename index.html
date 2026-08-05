@@ -930,47 +930,51 @@ const PICKED = "X";                // sentinel for a picked-up ball
 /* ==========================================================================
    2. DATA  (from Pat's "KHC Outing Scoring File")
    ========================================================================== */
-// idx / room / yrs all come straight from Pat's Player Checklist tab.
+// PLACEHOLDER ROSTER — dummy names/handicaps for testing. Replace with the
+// real Player Checklist data (names, idx, room, yrs, codes) before the event.
 const PLAYERS = {
-  // `title` is the man's role in the trip; `admin` is what he can do in the app.
-  // Pat is sole Commissioner; Andrew built the thing. Both have Admin Access.
-  pat:    {n:"Pat Hodgman",        t:"s", idx:6.7,  room:1, yrs:4, code:"HAWA", admin:true, title:"Commissioner"},
-  andrew: {n:"Andrew Hanna",       t:"s", idx:-0.6, room:1, yrs:4, code:"LLNK", admin:true, title:"Coding Nerd"},
-  rendina:{n:"Anthony Rendina",    t:"s", idx:16.2, room:2, yrs:4, code:"XJG9", title:"Daddy Dina"},
-  robert: {n:"Robert Leonard",     t:"s", idx:8.8,  room:3, yrs:3, code:"NGMY", title:"Bobby"},
-  curtin: {n:"Mike Curtin",        t:"s", idx:2.1,  room:2, yrs:2, code:"GM2B", title:"Mikey"},
-  gudden: {n:"Micheal Guddendorf", t:"s", idx:14.7, room:3, yrs:1, code:"3RP5", title:"New Guy"},
-  alec:   {n:"Alec Kaczkowski",    t:"s", idx:7.4,  room:4, yrs:4, code:"XANY", title:"Kaz"},
-  bert:   {n:"Alex Bertolini",     t:"s", idx:10.0, room:5, yrs:4, code:"XHMW", title:"BIRDO"},
-  jordan: {n:"Jordan Watt",        t:"s", idx:16.0, room:5, yrs:4, code:"AQFV", title:"JWATT"},
-  luke:   {n:"Luke Smeester",      t:"s", idx:9.1,  room:4, yrs:1, code:"T6AQ", title:"New Guy"},
-  jacobs: {n:"Alex Jacobs",        t:"d", idx:5.8,  room:1, yrs:4, code:"45YM", title:"Duck Captain"},
-  blohm:  {n:"Jason Blohm",        t:"d", idx:6.9,  room:1, yrs:4, code:"WK25", title:"Blohmer"},
-  ryan:   {n:"Ryan Raupach",       t:"d", idx:11.9, room:2, yrs:4, code:"LAKA", title:"Big Paw"},
-  cam:    {n:"Cameron Raupach",    t:"d", idx:9.4,  room:2, yrs:4, code:"QUSB", title:"Lil Paw"},
-  mosele: {n:"Nick Mosele",        t:"d", idx:6.0,  room:3, yrs:2, code:"52WT", title:"Bloomington Guy"},
-  eric:   {n:"Eric Petersen",      t:"d", idx:15.7, room:5, yrs:4, code:"Q87G", title:"Stretch"},
-  reed:   {n:"Reed Hosteller",     t:"d", idx:10.3, room:5, yrs:3, code:"DBBY", title:"Hos"},
-  matt:   {n:"Matt Emerick",       t:"d", idx:23.1, room:3, yrs:3, code:"3885", title:"Sandbagger"},
-  cooper: {n:"Cooper Macek",       t:"d", idx:15.1, room:4, yrs:1, code:"LTBM", title:"New Guy"},
-  austin: {n:"Austin MacDonald",   t:"d", idx:9.8,  room:4, yrs:4, code:"A56N", title:"Charlotte"}
+  player1: {n:"Player 1",  t:"s", idx:5.0,  room:1, yrs:1, code:"P001", admin:true},
+  player2: {n:"Player 2",  t:"s", idx:8.0,  room:1, yrs:1, code:"P002", admin:true},
+  player3: {n:"Player 3",  t:"s", idx:12.0, room:1, yrs:1, code:"P003"},
+  player4: {n:"Player 4",  t:"s", idx:15.0, room:1, yrs:1, code:"P004"},
+  player5: {n:"Player 5",  t:"s", idx:3.0,  room:1, yrs:1, code:"P005"},
+  player6: {n:"Player 6",  t:"s", idx:20.0, room:1, yrs:1, code:"P006"},
+  player7: {n:"Player 7",  t:"s", idx:9.0,  room:1, yrs:1, code:"P007"},
+  player8: {n:"Player 8",  t:"s", idx:11.0, room:1, yrs:1, code:"P008"},
+  player9: {n:"Player 9",  t:"s", idx:17.0, room:1, yrs:1, code:"P009"},
+  player10:{n:"Player 10", t:"s", idx:6.0,  room:1, yrs:1, code:"P010"},
+  player11:{n:"Player 11", t:"d", idx:14.0, room:1, yrs:1, code:"P011"},
+  player12:{n:"Player 12", t:"d", idx:4.0,  room:1, yrs:1, code:"P012"},
+  player13:{n:"Player 13", t:"d", idx:22.0, room:1, yrs:1, code:"P013"},
+  player14:{n:"Player 14", t:"d", idx:10.0, room:1, yrs:1, code:"P014"},
+  player15:{n:"Player 15", t:"d", idx:7.0,  room:1, yrs:1, code:"P015"},
+  player16:{n:"Player 16", t:"d", idx:18.0, room:1, yrs:1, code:"P016"},
+  player17:{n:"Player 17", t:"d", idx:13.0, room:1, yrs:1, code:"P017"},
+  player18:{n:"Player 18", t:"d", idx:25.0, room:1, yrs:1, code:"P018"},
+  player19:{n:"Player 19", t:"d", idx:16.0, room:1, yrs:1, code:"P019"},
+  player20:{n:"Player 20", t:"d", idx:9.5,  room:1, yrs:1, code:"P020"}
 };
 const last = id => PLAYERS[id].n.split(" ").slice(-1)[0];
 
-/* PLACEHOLDER — replace par, stroke index, and each tee's rating/slope the
-   moment the real scorecard is in hand. Rating/slope drive the live handicap
-   engine below (see "3. HANDICAP ENGINE"), so those two numbers are the ones
-   that actually matter here, not just yardage. */
+// From the Port-Scorecard: Harborside International Golf Center, Port Course, par 72.
 const COURSES = {
-  course1: {n:"TBD Course", par:[4,4,4,3,4,5,4,3,5, 4,4,3,5,4,4,3,5,4],
-    hcp:[7,11,3,17,9,1,13,15,5, 6,12,18,2,14,10,16,4,8],
+  course1: {n:"Harborside International Golf Center · Port Course",
+    par:[4,5,4,3,4,3,4,4,5, 4,5,4,3,4,3,4,4,5],
+    hcp:[9,1,11,15,5,17,13,7,3, 12,2,8,18,14,16,4,10,6],
     tees:{
-      Blue:  {rating:72.5, slope:128},
-      White: {rating:70.0, slope:118}
+      Tournament:   {rating:74.6, slope:137},
+      Championship: {rating:72.1, slope:131},
+      Regular:      {rating:69.2, slope:125},
+      Forward:      {rating:70.3, slope:125}
     },
-    yds:{Blue:[400,410,380,175,395,540,390,160,510, 385,400,150,520,375,395,155,530,405],
-         White:[370,385,355,150,370,505,360,140,470, 355,375,130,485,345,365,135,495,375]}}
+    yds:{
+      Tournament:   [423,544,402,232,466,180,408,430,575, 401,560,455,152,361,216,389,407,522],
+      Championship: [390,511,374,207,428,145,376,401,542, 375,537,419,125,331,192,359,375,502],
+      Regular:      [346,479,337,179,388,115,341,365,485, 351,493,378,116,293,169,324,337,481],
+      Forward:      [309,432,298,125,332,83,298,312,429, 305,445,331,78,260,134,286,291,416]
+    }}
 };
+const DEFAULT_TEE = "Regular";
 
 /* One format, per Andrew: best ball, two-team match play. Five placeholder
    matches to exercise the engine — real roster and tee times replace these.
@@ -978,14 +982,14 @@ const COURSES = {
    allowance live from PLAYERS[id].idx and the admin-selected tee/percentage,
    so there's nothing else to bake in here per player. */
 const ROUNDS = [
-{ n:1, day:"TBD", course:"course1", tee:"Blue", mode:"indiv", fmt:"Best Ball",
+{ n:1, day:"August 12, 2026", course:"course1", tee:DEFAULT_TEE, mode:"indiv", fmt:"Best Ball",
   rule:"Course handicap × the admin-set allowance, lowest of the four set to 0",
   matches:[
-  {id:"r1m1", t:"7:10 AM", s:{p:[["alec"],["luke"]]},   d:{p:[["ryan"],["mosele"]]}},
-  {id:"r1m2", t:"7:20 AM", s:{p:[["pat"],["robert"]]},  d:{p:[["cooper"],["jacobs"]]}},
-  {id:"r1m3", t:"7:30 AM", s:{p:[["curtin"],["jordan"]]},d:{p:[["cam"],["matt"]]}},
-  {id:"r1m4", t:"7:40 AM", s:{p:[["bert"],["gudden"]]}, d:{p:[["blohm"],["eric"]]}},
-  {id:"r1m5", t:"7:50 AM", s:{p:[["andrew"],["rendina"]]},d:{p:[["austin"],["reed"]]}}]}
+  {id:"r1m1", t:"7:10 AM", s:{p:[["player7"],["player10"]]}, d:{p:[["player13"],["player15"]]}},
+  {id:"r1m2", t:"7:20 AM", s:{p:[["player1"],["player4"]]},  d:{p:[["player19"],["player11"]]}},
+  {id:"r1m3", t:"7:30 AM", s:{p:[["player5"],["player9"]]},  d:{p:[["player14"],["player18"]]}},
+  {id:"r1m4", t:"7:40 AM", s:{p:[["player8"],["player6"]]},  d:{p:[["player12"],["player16"]]}},
+  {id:"r1m5", t:"7:50 AM", s:{p:[["player2"],["player3"]]},  d:{p:[["player20"],["player17"]]}}]}
 ];
 
 /* Side contests — none configured yet for this event; add per hole once
@@ -1031,16 +1035,15 @@ function strokesOn(allowance, strokeIndex){
 }
 
 /* ---- handicap engine ----------------------------------------------------
-   KHC Outing trusted a pre-computed allowance number for every player,
-   worked out offline in a spreadsheet. This event has one format and one
-   course, so instead the app computes it live from the player's raw index
-   plus two admin-controlled settings — which tee, and what percentage of
-   course handicap the format allows — via the standard formula:
+   Computed live from the player's raw index, his own tee choice (picked in
+   his account sheet — see Store.playerTee()/setPlayerTee()), and one
+   admin-controlled percentage of course handicap the format allows, via the
+   standard formula:
      Course Handicap = Index × (Slope / 113) + (Rating − Par)
      Playing Handicap = Course Handicap × allowance %
-   Changing either setting recalculates every player instantly; nothing is
-   baked into the round/match data. See Store.settings()/setSettings() and
-   the admin panel in viewSheet() for where those two numbers actually live. */
+   Changing any of these recalculates instantly; nothing is baked into the
+   round/match data. See Store.settings()/setSettings() and the admin panel
+   in viewSheet() for the allowance %. */
 function coursePar(c){ return c.par.reduce((a, b) => a + b, 0); }
 function courseHandicap(idx, c, tee){
   const t = c.tees[tee] || c.tees[Object.keys(c.tees)[0]];   // fall back if the tee is missing
@@ -1050,7 +1053,7 @@ function courseHandicap(idx, c, tee){
     allocates across the 18 holes by stroke index. */
 function liveAllowance(r, id){
   const c = COURSES[r.course], s = Store.settings();
-  return Math.round(courseHandicap(PLAYERS[id].idx, c, s.tee) * s.pct);
+  return Math.round(courseHandicap(PLAYERS[id].idx, c, Store.playerTee(id)) * s.pct);
 }
 function playerStrokes(r, side, pl, h){
   const c = COURSES[r.course];
@@ -1325,8 +1328,11 @@ function mvp(){
 const Store = (() => {
   const LS = `${EVENT_KEY}_data`, LS_CHAT = `${EVENT_KEY}_chat`, LS_SEEN = `${EVENT_KEY}_chatseen`;
   const LS_TIE = `${EVENT_KEY}_tie`, LS_SETTINGS = `${EVENT_KEY}_settings`;
-  const DEFAULT_SETTINGS = {pct: 0.85, tee: "Blue"};
+  const LS_PTEE = `${EVENT_KEY}_playertees`;
+  const DEFAULT_SETTINGS = {pct: 0.85};
   let data = {}, chatData = {}, chatSeen = {}, tie = null, settings = {...DEFAULT_SETTINGS};
+  let playerTees = {};   // {playerId: {tee, by, t}} — each player picks their own, newest-wins
+  try { playerTees = JSON.parse(localStorage.getItem(LS_PTEE) || "{}"); } catch(e){ playerTees = {}; }
   try { tie = JSON.parse(localStorage.getItem(LS_TIE) || "null"); } catch(e){ tie = null; }
   try { settings = {...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem(LS_SETTINGS) || "{}")}; }
   catch(e){ settings = {...DEFAULT_SETTINGS}; }
@@ -1458,18 +1464,35 @@ const Store = (() => {
     },
 
     /* ---- format settings ---------------------------------------------------
-       Two admin-controlled numbers the whole handicap engine reads: which tee
-       counts for rating/slope, and what percentage of course handicap the
-       format allows. Same shared-singleton pattern as tiebreak — one doc,
-       synced everywhere, newest-wins on the timestamp. Write access is only
-       gated in the UI (admin-only controls in viewSheet), the same as the
-       Reset ALL matches button; there's no separate rules-level check. */
+       The one admin-controlled number the whole handicap engine reads: what
+       percentage of course handicap the format allows. Same shared-singleton
+       pattern as tiebreak — one doc, synced everywhere, newest-wins on the
+       timestamp. Write access is only gated in the UI (admin-only controls in
+       viewSheet), the same as the Reset ALL matches button; there's no
+       separate rules-level check. */
     settings(){ return settings; },
     setSettings(patch, by){
       settings = {...settings, ...patch, by, t: now()};
       try { localStorage.setItem(LS_SETTINGS, JSON.stringify(settings)); } catch(e){}
       this._emit();
       if (db) track(update(ref(db, `${EVENT_KEY}/settings`), settings));
+    },
+
+    /* ---- player tees --------------------------------------------------------
+       Each player picks his own tee marker, unlike the shared allowance %
+       above. Keyed by player id rather than one shared doc — every player
+       only ever writes his own entry, so there's no real write contention,
+       but each entry is still timestamped and merged newest-wins like
+       everything else here for consistency. */
+    playerTee(id){
+      const p = playerTees[id];
+      return (p && typeof p.tee === "string") ? p.tee : DEFAULT_TEE;
+    },
+    setPlayerTee(id, tee, by){
+      playerTees[id] = {tee, by, t: now()};
+      try { localStorage.setItem(LS_PTEE, JSON.stringify(playerTees)); } catch(e){}
+      this._emit();
+      if (db) track(update(ref(db, `${EVENT_KEY}/playerTees/${id}`), playerTees[id]));
     },
 
     scorer(id){ return (data[id] || {}).scorer || null; },
@@ -1689,10 +1712,20 @@ const Store = (() => {
           const v = snap.val();
           settings = (v && typeof v.t === "number")
             ? {pct: typeof v.pct === "number" ? v.pct : DEFAULT_SETTINGS.pct,
-               tee: typeof v.tee === "string" ? v.tee : DEFAULT_SETTINGS.tee,
                by: typeof v.by === "string" ? v.by : "", t: v.t}
             : {...DEFAULT_SETTINGS};
           try { localStorage.setItem(LS_SETTINGS, JSON.stringify(settings)); } catch(e){}
+          this._emit();
+        }, () => {});
+        onValue(ref(db, `${EVENT_KEY}/playerTees`), snap => {
+          const all = snap.val() || {};
+          for (const id in all){
+            const v = all[id];
+            if (!v || typeof v.t !== "number" || typeof v.tee !== "string") continue;
+            const cur = playerTees[id];
+            if (!cur || v.t > cur.t) playerTees[id] = v;
+          }
+          try { localStorage.setItem(LS_PTEE, JSON.stringify(playerTees)); } catch(e){}
           this._emit();
         }, () => {});
         onValue(ref(db, `${EVENT_KEY}/chat`), snap => {
@@ -1851,7 +1884,7 @@ function viewLogin(){
       display:flex;align-items:center;justify-content:center;text-align:center;
       color:#c9a227;font-weight:800;letter-spacing:1px;font-size:13px;padding:12px">
       REPLACE ME<br>(crest / logo image)</div>
-    <div class="dates">[REPLACE ME &ndash; event dates]</div>
+    <div class="dates">August 12, 2026</div>
     <div class="teamrow"><span class="t s">KRAFT</span><span class="vs">VS</span>
       <span class="t d">HEINZ</span></div>
     <input class="codein mono" id="code" maxlength="4" placeholder="CODE"
@@ -3692,13 +3725,13 @@ function holeEvents(r, m, h){
   const se = eagle("s", "bigbird");   if (se) evs.push(se);
   const de = eagle("d", "blindduck"); if (de) evs.push(de);
 
-  // Emerick posts a gross birdie or better. In best ball, shamble or singles
-  // it's his own line; in Scramble/Alt Shot it's the team's shared ball, but
-  // Andrew wants the shade thrown at him regardless of whose shot it really was.
-  const mattSide = m.s.p.some(p => p[0] === "matt") ? "s"
-                 : m.d.p.some(p => p[0] === "matt") ? "d" : null;
+  // Designated "sandbagger" posts a gross birdie or better. In best ball,
+  // shamble or singles it's his own line; in Scramble/Alt Shot it's the
+  // team's shared ball, but he gets the shade regardless of whose shot it was.
+  const mattSide = m.s.p.some(p => p[0] === "player18") ? "s"
+                 : m.d.p.some(p => p[0] === "player18") ? "d" : null;
   if (mattSide){
-    const em = r.mode === "team" ? hs[mattSide] : hs["matt"];
+    const em = r.mode === "team" ? hs[mattSide] : hs["player18"];
     if (em && !em.picked && em.gross - par <= -1) evs.push({kind: "sandbag"});
   }
   return evs;
@@ -4070,11 +4103,8 @@ function viewCard(){
     only way to change it after scoring starts is Reset ALL matches. */
 function formatSettingsHTML(){
   const s = Store.settings(), locked = anyMatchBegun();
-  const tees = Object.keys(COURSES[ROUNDS[0].course].tees);
   const pctOpts = [100, 95, 90, 85, 80, 75].map(p => `<option value="${p}"${
     Math.round(s.pct * 100) === p ? " selected" : ""}>${p}% of course handicap</option>`).join("");
-  const teeOpts = tees.map(t => `<option value="${esc(t)}"${
-    s.tee === t ? " selected" : ""}>${esc(t)}</option>`).join("");
   return `<div class="sect" style="margin-top:4px">Format settings</div>
     <p style="margin-bottom:10px;color:var(--muted);font-size:12.5px;line-height:1.55">
       Drives the handicap engine for every player, every match. ${locked
@@ -4085,11 +4115,21 @@ function formatSettingsHTML(){
     <div class="fmtrow">
       <label for="fmtpct">Allowance</label>
       <select id="fmtpct" class="statsel" ${locked ? "disabled" : ""}>${pctOpts}</select>
-    </div>
-    <div class="fmtrow">
-      <label for="fmttee">Tee marker</label>
-      <select id="fmttee" class="statsel" ${locked ? "disabled" : ""}>${teeOpts}</select>
     </div>`;
+}
+/** Every player's own tee choice — not admin-gated, since each man picks his
+    own. Locks with the same anyMatchBegun() rule as the allowance % above so
+    a mid-round change can't quietly shift someone's strokes. */
+function myTeeHTML(){
+  const tees = Object.keys(COURSES[ROUNDS[0].course].tees);
+  const mine = Store.playerTee(Session.id), locked = anyMatchBegun();
+  const opts = tees.map(t => `<option value="${esc(t)}"${
+    mine === t ? " selected" : ""}>${esc(t)}</option>`).join("");
+  return `<div class="fmtrow">
+      <label for="mytee">Your tee</label>
+      <select id="mytee" class="statsel" ${locked ? "disabled" : ""}>${opts}</select>
+    </div>${locked ? `<p style="margin:6px 0 10px;color:var(--dim);font-size:11.5px">
+      Locked &mdash; scoring has started.</p>` : ""}`;
 }
 
 /* ---------- menu ---------- */
@@ -4111,6 +4151,10 @@ function viewSheet(){
     <div class="mycode"><div class="mck">Your login code</div>
       <div class="mcv mono">${Session.me.code}</div>
       <div class="mch">Write this down. It's how you get back in if you're ever signed out.</div></div>
+    <div class="sect" style="margin-top:4px">Your tee</div>
+    <p style="margin-bottom:10px;color:var(--muted);font-size:12.5px;line-height:1.55">
+      Sets which tee's rating/slope your course handicap is calculated from.</p>
+    ${myTeeHTML()}
     ${codes}
     ${Session.admin ? formatSettingsHTML() : ""}
     ${Session.admin ? `<div class="sect" style="margin-top:4px">Backup</div>
@@ -4159,9 +4203,9 @@ function viewEventOverview(){
       <h1>Event Overview<div class="sub">The whole trip on one page</div></h1>
       ${navBtnsHTML()}</div>
     <div class="wrap">
-    <p><b style="color:var(--text)">Shanty Creek Resort</b> &middot; Bellaire, Michigan<br>
-      Five 18-hole matches, Thursday Aug 13 &ndash; Saturday Aug 15. Rooms are booked
-      Thursday (8/13) through Sunday (8/16).</p>
+    <p><b style="color:var(--text)">Harborside International Golf Center &middot; Port Course</b>
+      &middot; Chicago, IL<br>
+      Wednesday, August 12, 2026. [REPLACE ME &ndash; tee times / travel details once set.]</p>
 
     <div class="sect">Schedule</div>
     ${rows}
@@ -4450,10 +4494,10 @@ function wire(){
     Store.setSettings({pct: (+fmtPct.value) / 100}, Session.id);
     showToast(`Allowance set to ${fmtPct.value}%`);
   };
-  const fmtTee = document.querySelector("#fmttee");
-  if (fmtTee) fmtTee.onchange = () => {
-    Store.setSettings({tee: fmtTee.value}, Session.id);
-    showToast(`Tee marker set to ${esc(fmtTee.value)}`);
+  const myTee = document.querySelector("#mytee");
+  if (myTee) myTee.onchange = () => {
+    Store.setPlayerTee(Session.id, myTee.value, Session.id);
+    showToast(`Your tee set to ${esc(myTee.value)}`);
   };
 
   /* --- gross score inputs -------------------------------------------------
