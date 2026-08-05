@@ -16,17 +16,18 @@
   --bg:#eef1f4; --surface:#fff; --surface2:#f4f6f8; --surface3:#e7ebef;
   --line:#dce2e8; --text:#0e1216; --muted:#5c6773; --dim:#8d97a3;
   --red:#c8102e; --red-dim:#fbe9ec;
-  --snots:#8a6d00; --snots-solid:#a9840c; --snots-tint:#faf1d5; --snots-edge:#ecdcaa;
-  --ducks:#1b6b3f; --ducks-solid:#1b6b3f; --ducks-tint:#e3f0e8; --ducks-edge:#bcdcc8;
+  --snots:#1c4f9c; --snots-solid:#2f6fd6; --snots-tint:#e7eefb; --snots-edge:#c2d6f5;
+  --ducks:#a3121f; --ducks-solid:#c8102e; --ducks-tint:#fbe9ea; --ducks-edge:#f0c3c7;
   --half:#9aa4b0;
   --shadow:0 1px 2px rgba(14,18,22,.06), 0 1px 8px rgba(14,18,22,.04);
   --safe-b:env(safe-area-inset-bottom,0px);
 }
-/* The lock screen wears the KHC Outing crest: forest green, gold, cream. */
+/* The lock screen is a neutral dark navy so it doesn't lean toward either
+   team's color before you've even logged in. */
 .splash{
-  --crest-green:#14472f; --crest-deep:#0e3322; --crest-gold:#c9a227; --crest-cream:#f2e7cd;
-  --surface:#0e3322; --surface2:#123d29; --line:#2c6144;
-  --text:#f2e7cd; --muted:#a9bfae; --dim:#7d9a88; --red:#c9a227;
+  --crest-green:#12294a; --crest-deep:#0a1830; --crest-gold:#c7d2e6; --crest-cream:#f0f3f8;
+  --surface:#0a1830; --surface2:#122845; --line:#28405f;
+  --text:#f0f3f8; --muted:#9fb0c9; --dim:#7288a6; --red:#c7d2e6;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
@@ -72,12 +73,12 @@ input,textarea{font-family:inherit}
   background-attachment:fixed}
 
 /* ---------- lock screen ---------- */
-/* TODO: replace #0b2a1c below with url("your-photo.jpg") center/cover no-repeat, #0b2a1c
-   once you have your own course/event background photo. */
+/* TODO: replace the stripe pattern below with url("your-photo.jpg") center/cover
+   no-repeat, #0a1830 once you have your own course/event background photo. */
 .splash{position:fixed;inset:0;
   background:
-    radial-gradient(900px 620px at 50% 18%, rgba(26,86,56,.55) 0%, rgba(11,42,28,.9) 70%),
-    repeating-linear-gradient(45deg, #12301f 0 18px, #0b2a1c 18px 36px);
+    radial-gradient(900px 620px at 50% 18%, rgba(18,40,74,.6) 0%, rgba(10,24,48,.9) 70%),
+    repeating-linear-gradient(45deg, #122845 0 18px, #0a1830 18px 36px);
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   padding:22px;z-index:100;overflow:hidden}
 .stars{position:absolute;inset:0;pointer-events:none}
@@ -90,14 +91,14 @@ input,textarea{font-family:inherit}
   font-weight:750;margin-bottom:15px}
 .teamrow{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:15px}
 .teamrow .t{font-size:12.5px;font-weight:850;letter-spacing:2.4px}
-.teamrow .t.s{color:var(--crest-cream)} .teamrow .t.d{color:#7fc79b}
+.teamrow .t.s{color:#a9c6f2} .teamrow .t.d{color:#f3a9ae}
 .teamrow .vs{font-size:10.5px;font-weight:800;color:var(--dim);letter-spacing:1px}
 .codein{width:100%;text-align:center;font-size:26px;letter-spacing:11px;font-weight:800;
   padding:15px 10px 15px 21px;border-radius:13px;background:rgba(0,0,0,.28);
   border:1.5px solid var(--line);color:var(--crest-cream);text-transform:uppercase;outline:none}
 .codein:focus{border-color:var(--crest-gold)}
-.codein::placeholder{letter-spacing:9px;color:#4d6f5b;font-weight:600}
-.splash .btn{background:var(--crest-gold);color:#0e3322}
+.codein::placeholder{letter-spacing:9px;color:#4a5b74;font-weight:600}
+.splash .btn{background:var(--crest-gold);color:#0a1830}
 .splash .hint{color:var(--dim)}
 .btn{display:block;width:100%;padding:15px;border-radius:13px;background:var(--red);
   color:#fff;font-weight:750;font-size:16px;margin-top:10px;letter-spacing:.2px}
@@ -157,7 +158,7 @@ input,textarea{font-family:inherit}
 .tierrow.mainstay .tiername{color:#6e767c}
 .tierrow.returner .tiername{color:#7a4a17}
 .tierrow.rookie   .tiername{color:#1f6b36}
-.pfacts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+.pfacts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
 .pfact{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 4px}
 .pfact .k{font-size:9.5px;font-weight:800;letter-spacing:1px;color:var(--dim);text-transform:uppercase}
 .pfact .v{font-size:17px;font-weight:850;margin-top:2px}
@@ -443,16 +444,16 @@ input,textarea{font-family:inherit}
 .dormiewrap{position:fixed;inset:0;z-index:95;display:flex;align-items:center;
   justify-content:center;padding:28px;animation:tfade .25s ease-out}
 .dormiewrap.out{animation:tout .3s ease-in forwards}
-.dormiewrap.s{background:radial-gradient(circle at 50% 35%,#3a2e08,#0b0700 72%)}
-.dormiewrap.d{background:radial-gradient(circle at 50% 35%,#07301c,#020c07 72%)}
+.dormiewrap.s{background:radial-gradient(circle at 50% 35%,#12294a,#050d1a 72%)}
+.dormiewrap.d{background:radial-gradient(circle at 50% 35%,#3a0f14,#140506 72%)}
 .dormiein{text-align:center;max-width:400px;animation:fpop .5s cubic-bezier(.2,.9,.3,1.25)}
 .dormiefig{margin:0 auto 14px}
 .dormiefig svg{width:110px;height:auto;margin:0 auto;display:block}
 .dormiehd{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:16px}
 .dormiehd svg{width:34px;height:34px;flex:none;display:block}
 .dormietitle{font-size:15px;font-weight:850;letter-spacing:3px;text-transform:uppercase}
-.dormiewrap.s .dormietitle{color:#f4c542}
-.dormiewrap.d .dormietitle{color:#4fbf82}
+.dormiewrap.s .dormietitle{color:#8fb5f0}
+.dormiewrap.d .dormietitle{color:#f3a9ae}
 .dormieline{font-size:28px;font-weight:850;color:#fff;line-height:1.3}
 .dormiebtn{position:fixed;right:18px;bottom:max(18px,env(safe-area-inset-bottom,0px));
   z-index:96;background:var(--red);color:#fff;font-weight:800;font-size:15px;
@@ -482,7 +483,7 @@ input,textarea{font-family:inherit}
 @keyframes tup{from{opacity:0;transform:translate(-50%,-50%) scale(.9)}
   to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
 .toast b{font-weight:850}
-.toast .win.s{color:#f0d78a} .toast .win.d{color:#7fc79b}
+.toast .win.s{color:#8fb5f0} .toast .win.d{color:#f3a9ae}
 
 /* ---------- cards ---------- */
 .sect{font-size:11px;font-weight:800;letter-spacing:2px;color:var(--dim);
@@ -642,7 +643,7 @@ table.gc .hrange{font-weight:600;color:var(--dim);font-size:9.5px;letter-spacing
 @keyframes vfin{to{opacity:1}}
 @keyframes vfout{to{opacity:0}}
 .vflash b{font-weight:850}
-.vflash .win.s{color:#f0d78a} .vflash .win.d{color:#7fc79b}
+.vflash .win.s{color:#8fb5f0} .vflash .win.d{color:#f3a9ae}
 table.gc .rowres .tot.s{background:var(--snots-solid);color:#fff}
 table.gc .rowres .tot.d{background:var(--ducks-solid);color:#fff}
 table.gc .rowres .tot.h{background:var(--half);color:#fff}
@@ -788,7 +789,7 @@ table.sl tr.s .tm{color:var(--snots)} table.sl tr.d .tm{color:var(--ducks)}
 .msg .meta .sending{color:var(--dim)} .msg .meta .failed{color:var(--red);font-weight:750}
 .chatempty{text-align:center;color:var(--dim);font-size:13px;padding:34px 14px;line-height:1.6}
 .msg .bub .men{font-weight:800;color:var(--snots)}
-.msg.mine .bub .men{color:#f0d78a}
+.msg.mine .bub .men{color:#8fb5f0}
 .msg .bub .men.me{background:var(--red);color:#fff;border-radius:5px;padding:1px 5px}
 .msg.tagged .bub{border-color:var(--red);border-width:1.5px;background:var(--red-dim)}
 .tagbtn{flex:none;width:40px;height:40px;border-radius:11px;background:var(--surface);
@@ -933,8 +934,8 @@ const PICKED = "X";                // sentinel for a picked-up ball
 // PLACEHOLDER ROSTER — dummy names/handicaps for testing. Replace with the
 // real Player Checklist data (names, idx, room, yrs, codes) before the event.
 const PLAYERS = {
-  player1: {n:"Player 1",  t:"s", idx:5.0,  room:1, yrs:1, code:"P001", admin:true},
-  player2: {n:"Player 2",  t:"s", idx:8.0,  room:1, yrs:1, code:"P002", admin:true},
+  player1: {n:"Pat Hodgman", t:"s", idx:5.0,  room:1, yrs:1, code:"P001", admin:true},
+  player2: {n:"Player 2",  t:"s", idx:8.0,  room:1, yrs:1, code:"P002"},
   player3: {n:"Player 3",  t:"s", idx:12.0, room:1, yrs:1, code:"P003"},
   player4: {n:"Player 4",  t:"s", idx:15.0, room:1, yrs:1, code:"P004"},
   player5: {n:"Player 5",  t:"s", idx:3.0,  room:1, yrs:1, code:"P005"},
@@ -1008,13 +1009,13 @@ const SPECIAL_LABEL = {ctp: "Closest to the Pin", ld: "Long Drive"};
 const SPECIAL_SHORT = {ctp: "CTP", ld: "LD"};
 
 /* A restrained colour per round so they're easy to tell apart at a glance —
-   deliberately nothing near the Kraft gold or Heinz green. */
-const ROUND_COLOUR = ["#2f5d8a", "#5a4b8a", "#a05a2c", "#2f7d7d", "#8a2f4a"];
+   deliberately nothing near the Kraft blue or Heinz red. */
+const ROUND_COLOUR = ["#5a4b8a", "#a05a2c", "#2f7d7d", "#6b5b3d", "#4a4a4a"];
 const rColour = n => ROUND_COLOUR[(n - 1) % ROUND_COLOUR.length];
 
-/* Series history. This year's winner is appended automatically once every
-   match is final — see seriesHTML(). */
-const SERIES = [{y:2023, w:"s"}, {y:2024, w:"s"}, {y:2025, w:"d"}];
+/* Series history — not shown for this event. Left empty since seriesHTML()
+   is no longer called from Home; see viewHome(). */
+const SERIES = [];
 
 const ALL_MATCHES = {};
 ROUNDS.forEach(r => r.matches.forEach(m => ALL_MATCHES[m.id] = {r, m}));
@@ -1388,6 +1389,9 @@ const Store = (() => {
     if (remote.submitted && (!b.submitted || remote.submitted.t > b.submitted.t)){
       b.submitted = remote.submitted; changed = true;
     }
+    if (remote.teesConfirmed && (!b.teesConfirmed || remote.teesConfirmed.t > b.teesConfirmed.t)){
+      b.teesConfirmed = remote.teesConfirmed; changed = true;
+    }
     return changed;
   }
 
@@ -1502,6 +1506,15 @@ const Store = (() => {
       if (db) track(update(ref(db, `${EVENT_KEY}/matches/${id}/scorer`), {id: pid, t}));
     },
 
+    /* Whoever takes over scoring confirms every player's tee before hole 1
+       unlocks — same per-match bucket/sync pattern as scorer/submitted. */
+    teesConfirmed(id){ const s = (data[id] || {}).teesConfirmed; return !!(s && s.v); },
+    setTeesConfirmed(id, by){
+      const b = bucket(id), t = now();
+      b.teesConfirmed = {v: true, by, t}; flush(); this._emit();
+      if (db) track(update(ref(db, `${EVENT_KEY}/matches/${id}/teesConfirmed`), {v: true, by, t}));
+    },
+
     /* A submitted match is signed off and locked. Scoring stays open until
        someone submits, so all 18 holes can be entered for the statistics even
        after the match itself is mathematically over. */
@@ -1540,6 +1553,7 @@ const Store = (() => {
       }
       b.scorer = {id: null, t};
       b.submitted = {v: false, by: "reset", t};
+      b.teesConfirmed = {v: false, by: "reset", t};
       flush(); this._emit();
       if (db){
         track(update(ref(db, `${EVENT_KEY}/matches/${id}/scores`), payload));
@@ -1547,6 +1561,8 @@ const Store = (() => {
           track(update(ref(db, `${EVENT_KEY}/matches/${id}/mulligans`), mulPayload));
         track(update(ref(db, `${EVENT_KEY}/matches/${id}/scorer`), {id: null, t}));
         track(update(ref(db, `${EVENT_KEY}/matches/${id}/submitted`),
+               {v: false, by: "reset", t}));
+        track(update(ref(db, `${EVENT_KEY}/matches/${id}/teesConfirmed`),
                {v: false, by: "reset", t}));
       }
     },
@@ -1880,10 +1896,23 @@ function viewLogin(){
       width:${s}px;height:${s}px;animation-delay:${(Math.random()*3.4).toFixed(1)}s"></i>`;
   }
   return `<div class="splash"><div class="stars">${stars}</div><div class="splash-inner">
-    <div class="crest" style="aspect-ratio:1/1;border:2px dashed #c9a227;border-radius:16px;
-      display:flex;align-items:center;justify-content:center;text-align:center;
-      color:#c9a227;font-weight:800;letter-spacing:1px;font-size:13px;padding:12px">
-      REPLACE ME<br>(crest / logo image)</div>
+    <div class="crest" style="position:relative;max-width:220px;margin:0 auto 10px">
+      <img src="kraftheinz-logo.avif" alt="Kraft Heinz" style="width:100%;height:auto;
+        display:block;border-radius:14px;background:#fff;padding:14px;box-sizing:border-box">
+      <div style="position:absolute;right:-8px;bottom:-8px;width:44px;height:44px;border-radius:50%;
+        background:var(--crest-deep);border:2px solid var(--crest-gold);display:flex;
+        align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,.4)"
+        aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--crest-gold)"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="5" r="3"></circle>
+          <line x1="12" y1="22" x2="12" y2="8"></line>
+          <path d="M5 12H2a10 10 0 0 0 20 0h-3"></path>
+        </svg>
+      </div>
+    </div>
+    <div style="font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;
+      margin:0 0 12px">Harborside International Golf Center</div>
     <div class="dates">August 12, 2026</div>
     <div class="teamrow"><span class="t s">KRAFT</span><span class="vs">VS</span>
       <span class="t d">HEINZ</span></div>
@@ -2032,7 +2061,6 @@ function viewHome(){
         Tap to read.</span></button>` : ""}
       ${boardHTML(st)}
       ${tiebreakHTML()}
-      ${seriesHTML()}
       ${mineId ? `<button class="btn big" data-nav="match" data-id="${mineId}"
         style="margin-top:0">Your Match</button>` : ""}
       <div class="actions">
@@ -2396,28 +2424,15 @@ function viewChat(){
 
 /* Monogram: an astronaut for a Snot, a duck for a Duck. Stands in for a photo
    until (if ever) we have somewhere to host real ones. */
+/** A plain team-letter monogram — K for Kraft, H for Heinz. Replaces the old
+    astronaut/duck mascot art; new visuals may replace this later. */
 function avatarSVG(id, cls){
-  const p = PLAYERS[id];
-  const snot = p.t === "s";
-  const CREAM = "#f2e7cd", DEEP = "#0b2a1c";
-  const inner = snot
-    // helmet shell, then a wide dark visor across the face — the previous
-    // version read as a tennis ball because the visor was a thin crescent
-    ? `<rect x="17" y="44" width="30" height="17" rx="7" fill="#8a6d00" stroke="${DEEP}" stroke-width="2.4"/>
-       <circle cx="32" cy="31" r="20" fill="${CREAM}" stroke="${DEEP}" stroke-width="2.6"/>
-       <path d="M18 28 a14 14 0 0 1 28 0 v5 a14 14 0 0 1 -28 0 z" fill="#16202b" stroke="${DEEP}" stroke-width="2"/>
-       <path d="M23 24 c3 -4 8 -6 13 -6" stroke="#8fd0ff" stroke-width="3"
-         fill="none" stroke-linecap="round" opacity=".85"/>
-       <rect x="8" y="25" width="7" height="13" rx="3.5" fill="#8a6d00" stroke="${DEEP}" stroke-width="2.2"/>
-       <rect x="49" y="25" width="7" height="13" rx="3.5" fill="#8a6d00" stroke="${DEEP}" stroke-width="2.2"/>`
-    : `<circle cx="36" cy="30" r="18" fill="#1b6b3f" stroke="${DEEP}" stroke-width="2.6"/>
-       <path d="M18 28 l-11 4 l11 5 z" fill="#e8820c" stroke="${DEEP}" stroke-width="2.2" stroke-linejoin="round"/>
-       <circle cx="28" cy="24" r="3.4" fill="${CREAM}"/><circle cx="27" cy="23.2" r="1.5" fill="${DEEP}"/>
-       <path d="M22 50 h34 a0 0 0 0 0 0 0 v4 H22 z" fill="${CREAM}"/>
-       <path d="M20 52 a18 14 0 0 0 30 0 z" fill="${CREAM}" stroke="${DEEP}" stroke-width="2.4"/>`;
+  const p = PLAYERS[id], snot = p.t === "s";
   return `<svg class="ava ${cls || ""} ${p.t}" viewBox="0 0 64 64" aria-hidden="true">
-    <circle cx="32" cy="32" r="31" fill="${snot ? "#faf1d5" : "#e3f0e8"}"
-      stroke="${snot ? "#a9840c" : "#1b6b3f"}" stroke-width="2"/>${inner}</svg>`;
+    <circle cx="32" cy="32" r="31" fill="${snot ? "var(--snots-solid)" : "var(--ducks-solid)"}"/>
+    <text x="32" y="32" text-anchor="middle" dominant-baseline="central"
+      font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif"
+      font-size="30" font-weight="800" fill="#fff">${snot ? "K" : "H"}</text></svg>`;
 }
 
 /** A generic chat-bubble monogram for the home screen's Chat button — not a
@@ -2507,7 +2522,7 @@ function tierBadgeHTML(yrs){
     the four key facts. Shared between your own profile page and the popup
     that shows when you tap someone else's row in "The field". */
 function profileCardHTML(id){
-  const p = PLAYERS[id], pts = playerPoints()[id] || 0;
+  const p = PLAYERS[id], stats = playerStats().find(x => x.id === id);
   const fact = (k, v) => `<div class="pfact"><div class="k">${k}</div><div class="v">${v}</div></div>`;
   return `<div class="pcard ${p.t}">
       ${avatarSVG(id, "big")}
@@ -2515,12 +2530,10 @@ function profileCardHTML(id){
       <div class="pteam">${p.t === "s" ? "KRAFT" : "HEINZ"}${
         p.title ? ` &middot; ${esc(p.title.toUpperCase())}` : ""}</div>
       ${p.admin ? `<div class="padmin">ADMIN ACCESS</div>` : ""}
-      ${tierBadgeHTML(p.yrs)}
       <div class="pfacts">
         ${fact("Handicap", fmtIdx(p.idx))}
-        ${fact("Room", p.room)}
-        ${fact("Years", p.yrs)}
-        ${fact("Points", fmtPt(pts))}
+        ${fact("Gross to Par", toPar(stats.grossToPar))}
+        ${fact("Net to Par", toPar(stats.netToPar))}
       </div>
     </div>`;
 }
@@ -2575,7 +2588,7 @@ function viewProfile(){
         roster += `<button class="card ${id === Session.id ? "me" : ""}" data-profile="${id}">
           <div class="rowline">${avatarSVG(id, "sm")}
           <div class="rmeta"><div class="t1">${esc(q.n)}${q.admin ? ` <span class="cmsh">ADMIN</span>` : ""}</div>
-            <div class="t2">Index ${fmtIdx(q.idx)} &middot; Room ${q.room} &middot; ${q.yrs} year${q.yrs === 1 ? "" : "s"}</div></div>
+            <div class="t2">Index ${fmtIdx(q.idx)}</div></div>
           <div class="chev">&rsaquo;</div></div></button>`;
       });
   });
@@ -2770,10 +2783,45 @@ function matchCard(r, m, st){
 }
 
 /* ---------- match: hole entry ---------- */
+/** Match players, both sides, as a flat list of ids — team mode collapses
+    to just the two side keys since there's no individual roster to confirm
+    tees for. */
+function matchPlayerIds(r, m){
+  if (r.mode === "team") return [];
+  return [...m.s.p.map(p => p[0]), ...m.d.p.map(p => p[0])];
+}
+/** Blocks hole 1 until whoever just took over scoring has confirmed every
+    player's tee — the course handicap engine reads it live, so this has to
+    happen before any score is entered, not after. */
+function viewTeeConfirm(r, m, sc){
+  const c = COURSES[r.course], mine = sc.id === Session.id;
+  const tees = Object.keys(c.tees);
+  const rows = matchPlayerIds(r, m).map(id => {
+    const p = PLAYERS[id], cur = Store.playerTee(id);
+    const opts = tees.map(t => `<option value="${esc(t)}"${cur === t ? " selected" : ""}>${esc(t)}</option>`).join("");
+    return `<div class="fmtrow"><label>${esc(p.n)} <span style="color:var(--dim)">&middot; ${
+      p.t === "s" ? "Kraft" : "Heinz"}</span></label>
+      <select class="statsel teeconfirm" data-teefor="${id}" ${mine ? "" : "disabled"}>${opts}</select></div>`;
+  }).join("");
+  return `<div class="topbar">
+      <button class="iconbtn" data-nav="round" data-i="${ROUNDS.indexOf(r)}">&#8592;</button>
+      <h1>Confirm Tees<div class="sub">${esc(c.n)}</div></h1>
+      ${navBtnsHTML()}
+    </div><div class="wrap">
+      <div class="lockbar"><b>Before hole 1:</b> ${mine
+        ? "confirm each player's tee. This sets his course handicap for the round."
+        : `Waiting for ${esc(PLAYERS[sc.id].n)} to confirm tees.`}</div>
+      ${rows}
+      ${mine ? `<button class="btn big" data-confirmtees="${m.id}" style="margin-top:6px">
+        Continue to Scoring &rsaquo;</button>` : ""}
+    </div>`;
+}
 function viewMatch(){
   const {r, m} = ALL_MATCHES[V.matchId], c = COURSES[r.course];
   const scores = Store.scores(m.id), st = matchState(r, m, scores);
   const h = V.hole, editable = canScore(m), sc = Store.scorer(m.id), par = c.par[h];
+  if (r.mode !== "team" && sc && sc.id && !Store.teesConfirmed(m.id) && !matchBegun(m.id))
+    return viewTeeConfirm(r, m, sc);
 
   // You can't run ahead of the card: the first hole without a result is as far
   // as anyone may go. Everything behind it stays open for corrections.
@@ -3005,16 +3053,19 @@ function dormieSnotSVG(){
 /** The Dormie banner itself: a full-screen, team-specific modal that sticks
     until the "Proceed to Scoring" button is tapped — no tap-anywhere-to-skip
     like the trash-talk scenes, this one's meant to be read and dealt with. */
+/* Plain text notice — was an illustrated astronaut/duck "Mission Control" /
+   "Waterfowl Warning" scene. Dormie itself (leader's margin equals holes
+   left) is a real match-play state worth flagging; only the mascot art and
+   themed copy are gone. New visuals to come later. */
 function showDormieModal(team){
   document.querySelectorAll(".dormiewrap").forEach(e => e.remove());
   const copy = team === "s"
-    ? {fig: dormieSnotSVG(), title: "Mission Control", line: "We are a go for DORMIE.<br>Launching Heinz in 3, 2, 1&hellip;"}
-    : {fig: dormieDuckSVG(), title: "Waterfowl Warning", line: "Heinz are DORMIE.<br>One more hole sends the Kraft swimming."};
+    ? {title: "Kraft is Dormie", line: "One more hole for Kraft wins the match."}
+    : {title: "Heinz is Dormie", line: "One more hole for Heinz wins the match."};
   const el = document.createElement("div");
   el.className = `dormiewrap ${team}`;
   el.innerHTML = `<div class="dormiein">
-      <div class="dormiefig">${copy.fig}</div>
-      <div class="dormiehd">${cautionSVG()}<span class="dormietitle">${copy.title}</span>${cautionSVG()}</div>
+      <div class="dormiehd"><span class="dormietitle">${copy.title}</span></div>
       <div class="dormieline">${copy.line}</div>
     </div>
     <button class="dormiebtn" data-dormieok="1">Proceed to Scoring &rsaquo;</button>`;
@@ -3491,18 +3542,9 @@ function pickScene(entries){
 /* Match open — plays every single time, on the way in, always at the duck's
    expense. Draws from the full roster: everything tagged for either a match
    open or a Kraft win. */
-function playTaunt(r, m){
-  const sub = `${esc(COURSES[r.course].n)} &middot; Play well`;
-  const line = `Round ${r.n} &middot; ${esc(r.fmt)}`;
-  pickScene([
-    {key: "taunt",    run: () => playScene({svg: tauntSVG(),    line, sub})},
-    {key: "rocket",   run: () => playScene({svg: rocketSVG(),   line, sub, ms: 4200})},
-    {key: "darth",    run: () => playScene({svg: darthSVG(),    line, sub})},
-    {key: "mars",     run: () => playScene({svg: marsSVG(),     line, sub, ms: 4200})},
-    {key: "rover",    run: () => playScene({svg: roverSVG(),    line, sub, ms: 4200})},
-    {key: "duckhunt", run: () => playScene({svg: duckHuntSVG(), line, sub, ms: 4200})}
-  ]).run();
-}
+/* Disabled — was the pre-match astronaut/duck taunt scene. New visuals to
+   come later; this is a deliberate no-op until then, not dead code to prune. */
+function playTaunt(r, m){ return; }
 
 /* Kraft take a match: astronauts on a duck hunt. */
 function duckHuntSVG(){
@@ -3556,21 +3598,10 @@ function duckHuntSVG(){
       <path d="M0 244 q46 -20 92 0 t92 0 t92 0 t92 0 v58 H0 z" fill="#0b2f1e"/>
     </g></svg>`;
 }
-/* Kraft take a match — also drawn at random from the pool. */
+/* Plain toast — was a randomly-picked astronaut/duck-hunt scene. New visuals
+   to come later. */
 function playWin(r, m, st){
-  const sub = esc(m.s.p.map(p => last(p[0])).join(" / "));
-  const line = `Kraft win ${esc(st.text)}`;
-  const stamp = "Kraft Win!";
-  // match-winning scenes run 3s longer than everything else in the pool —
-  // it's the payoff moment, worth lingering on
-  pickScene([
-    {key: "taunt",    run: () => playScene({svg: tauntSVG(),    line, sub, stamp, ms: 6800})},
-    {key: "duckhunt", run: () => playScene({svg: duckHuntSVG(), line, sub, stamp, ms: 7200})},
-    {key: "rocket",   run: () => playScene({svg: rocketSVG(),   line, sub, stamp, ms: 7200})},
-    {key: "darth",    run: () => playScene({svg: darthSVG(),    line, sub, stamp, ms: 6800})},
-    {key: "mars",     run: () => playScene({svg: marsSVG(),     line, sub, stamp, ms: 7200})},
-    {key: "rover",    run: () => playScene({svg: roverSVG(),    line, sub, stamp, ms: 7200})}
-  ]).run();
+  showToast(`<span class="win s">Kraft win ${esc(st.text)}</span>`);
 }
 
 /* `from` names another match when the scene is being relayed to the field —
@@ -3602,11 +3633,10 @@ function playBlindDuck(who, kind, from){
   playScene({svg: blindDuckSVG(), line: "Even a blind duck makes an eagle", ms: 4200,
     sub: `${esc(who)} &middot; ${kind === "net" ? "net eagle" : "eagle"}${fromTag(from)}`});
 }
-/* Heinz take a match. The one time they get a scene, and they still don't
-   take credit for it. */
+/* Plain toast — was an illustrated slot-machine scene. New visuals to come
+   later. */
 function playHeinzWin(r, m, st){
-  playScene({svg: ducksWinSVG(), line: `Heinz win ${esc(st.text)}`, ms: 7200,
-    sub: "I have no skill, I'm just a lucky duck", stamp: "Heinz Win!"});
+  showToast(`<span class="win d">Heinz win ${esc(st.text)}</span>`);
 }
 /* Matt Emerick posts a gross birdie or better. Everything else about this
    scene stays exactly as it was — just no name in the caption anymore. */
@@ -3616,17 +3646,14 @@ function playSandbag(from){
 }
 /* The clinching point lands — a quick fireworks flash naming whichever side
    just took the Outing, on every phone, regardless of side. */
+/* Plain toast — was a full-screen fireworks/podium scene. New visuals to
+   come later; playVictory below is now a deliberate no-op since this toast
+   covers the clinch for both teams. */
 function playClinch(team, pts){
-  playScene({svg: fireworksSVG(team), line: team === "s" ? "Kraft Win!" : "Heinz Win!", ms: CLINCH_FIREWORKS_MS,
-    sub: `${fmtPt(pts)} points &middot; ${fmtPt(CLINCH)} to clinch`});
+  showToast(`<span class="win ${team}">${team === "s" ? "Kraft" : "Heinz"} clinch the Outing!</span><br>
+    ${fmtPt(pts)} points &middot; ${fmtPt(CLINCH)} to clinch`);
 }
-/* The Outing is won. Longer, and it plays on every phone. Heinz clinching
-   only ever gets the fireworks above — this podium scene stays Kraft-only,
-   Andrew's call. */
-function playVictory(pts){
-  playScene({svg: victorySVG(), line: "KRAFT WIN THE CRUSADE", ms: 10000,
-    sub: `${fmtPt(pts)} points &middot; ${fmtPt(CLINCH)} to clinch`});
-}
+function playVictory(pts){ return; }
 
 /* Fires when the hole you just finished is followed by a side contest. */
 function flashSpecial(kind, holeNo){
@@ -3696,45 +3723,13 @@ function scheduleHoleSettle(r, m, h){
  * Kept separate from playing it so the scorer's own phone and every other
  * phone in the field decide identically — the two paths can't drift.
  */
+/* Disabled — was turkey/hambone/sitting-duck streak call-outs, Big Bird/Blind
+   Duck eagle alerts, and the sandbagger birdie shade. Returning no events here
+   silences every trigger site (afterHoleComplete's own-hole playback and
+   broadcastFieldEvents' cross-match broadcast) without touching either. New
+   visuals to come later; this is a deliberate no-op, not dead code to prune. */
 function holeEvents(r, m, h){
-  const scores = Store.scores(m.id);
-  const st = matchState(r, m, scores);
-  const hs = holeScores(r, m, h, scores);
-  const par = COURSES[r.course].par[h];
-  const evs = [];
-
-  // Kraft on a run: Turkey at 3, Hambone at 4, Sitting Duck at 5, then
-  // nothing — Andrew's rule, it stops being funny past five.
-  let streak = 0;
-  for (let i = h; i >= 0 && st.holes[i] === "s"; i--) streak++;
-  if (streak >= 3 && streak <= 5)
-    evs.push({kind: streak === 3 ? "turkey" : streak === 4 ? "hambone" : "sitting",
-              names: m.s.p.map(p => last(p[0])).join(" / ")});
-
-  // an eagle, gross or net — Kraft get Big Bird Alert, Heinz get Blind Duck
-  const eagle = (side, kind) => {
-    const ents = r.mode === "team" ? [side] : m[side].p.map(p => p[0]);
-    for (const id of ents){
-      const v = hs[id]; if (!v || v.picked) continue;
-      const who = r.mode === "team" ? m[side].p.map(p => last(p[0])).join(" / ") : PLAYERS[id].n;
-      if (v.gross - par <= -2) return {kind, who, how: "gross"};
-      if (v.net   - par <= -2) return {kind, who, how: "net"};
-    }
-    return null;
-  };
-  const se = eagle("s", "bigbird");   if (se) evs.push(se);
-  const de = eagle("d", "blindduck"); if (de) evs.push(de);
-
-  // Designated "sandbagger" posts a gross birdie or better. In best ball,
-  // shamble or singles it's his own line; in Scramble/Alt Shot it's the
-  // team's shared ball, but he gets the shade regardless of whose shot it was.
-  const mattSide = m.s.p.some(p => p[0] === "player18") ? "s"
-                 : m.d.p.some(p => p[0] === "player18") ? "d" : null;
-  if (mattSide){
-    const em = r.mode === "team" ? hs[mattSide] : hs["player18"];
-    if (em && !em.picked && em.gross - par <= -1) evs.push({kind: "sandbag"});
-  }
-  return evs;
+  return [];
 }
 /** Render one descriptor. `from` names the match when it isn't your own. */
 function playHoleEvent(ev, from){
@@ -4437,6 +4432,12 @@ function wire(){
 
   const claim = document.querySelector("[data-claim]");
   if (claim) claim.onclick = () => { Store.setScorer(claim.dataset.claim, Session.id); render(); };
+  document.querySelectorAll("[data-teefor]").forEach(el => { if (el.disabled) return;
+    el.onchange = () => Store.setPlayerTee(el.dataset.teefor, el.value, Session.id); });
+  const confirmTees = document.querySelector("[data-confirmtees]");
+  if (confirmTees) confirmTees.onclick = () => {
+    Store.setTeesConfirmed(confirmTees.dataset.confirmtees, Session.id); render();
+  };
   // hand the card to a named player straight from the briefing
   document.querySelectorAll("[data-give]").forEach(el => el.onclick = () => {
     const to = el.dataset.to;
