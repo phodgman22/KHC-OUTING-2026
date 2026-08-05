@@ -270,6 +270,8 @@ input,textarea{font-family:inherit}
 @keyframes tfade{from{opacity:0}to{opacity:1}}
 @keyframes tout{to{opacity:0}}
 .taunt svg{width:min(88vw,380px);height:auto;overflow:visible}
+.taunt img{width:min(72vw,300px);height:auto;border-radius:16px;
+  box-shadow:0 14px 44px rgba(0,0,0,.5);display:block}
 .taunt .tline{color:#f2e7cd;font-size:15px;font-weight:800;letter-spacing:2.4px;
   text-transform:uppercase;margin-top:20px;opacity:0;animation:tin .4s ease-out 1.25s forwards;
   text-align:center;padding:0 20px;line-height:1.5}
@@ -1311,14 +1313,14 @@ function playerPoints(){
   return out;
 }
 
-/** Most points on the leading team. Ties broken by holes played under net par. */
+/** Most holes won on the leading team. Ties broken by net holes, then net score to par. */
 function mvp(){
   const st = standings();
   if (st.s === st.d && st.projS === st.projD) return null;
   const team = (st.s > st.d) || (st.s === st.d && st.projS > st.projD) ? "s" : "d";
-  const pool = playerStats().filter(p => p.team === team && p.points > 0);
+  const pool = playerStats().filter(p => p.team === team && p.holesWon > 0);
   if (!pool.length) return null;
-  pool.sort((a, b) => b.points - a.points || b.netHoles - a.netHoles || a.netToPar - b.netToPar);
+  pool.sort((a, b) => b.holesWon - a.holesWon || b.netHoles - a.netHoles || a.netToPar - b.netToPar);
   return {...pool[0], team, decided: st.fin === MATCH_COUNT};
 }
 
@@ -2634,7 +2636,7 @@ function viewStats(){
 
   // every statistic the filter can show: label, how to read it, sort direction
   const STATS = {
-    mvp:      {lbl:"MVP ranking",          get:p=>p.points, fmt:fmtPt, tie:(a,b)=>b.netHoles - a.netHoles},
+    mvp:      {lbl:"MVP ranking",          get:p=>p.holesWon, tie:(a,b)=>b.netHoles - a.netHoles},
     net:      {lbl:"Net score to par",     get:p=>p.netToPar,   fmt:toPar, low:true},
     gross:    {lbl:"Gross score to par",   get:p=>p.grossToPar, fmt:toPar, low:true},
     worst:    {lbl:"Most over par (Gross)",get:p=>p.grossToPar, fmt:toPar},
@@ -2647,15 +2649,13 @@ function viewStats(){
     over:     {lbl:"Holes over par (Gross)", get:p=>p.over},
     overN:    {lbl:"Holes over par (Net)",   get:p=>p.overN},
     holesWon: {lbl:"Most Holes Won",       get:p=>p.holesWon},
-    holesLost:{lbl:"Most Holes Lost",      get:p=>p.holesLost},
-    points:   {lbl:"Team points won",      get:p=>p.points, fmt:fmtPt}
+    holesLost:{lbl:"Most Holes Lost",      get:p=>p.holesLost}
   };
-  const mulligan = V.statSort === "mulligans";
-  const key = mulligan ? "mulligans" : (STATS[V.statSort] ? V.statSort : "net");
+  const key = STATS[V.statSort] ? V.statSort : "net";
   const S = STATS[key];
   const val = p => S.get(p);
   const shown = p => (S.fmt ? S.fmt(val(p)) : String(val(p)));
-  const sorted = mulligan ? [] : [...rows].sort((a, b) =>
+  const sorted = [...rows].sort((a, b) =>
     (S.low ? val(a) - val(b) : val(b) - val(a)) ||
     (S.tie ? S.tie(a, b) : 0) || a.netToPar - b.netToPar);
 
@@ -2669,30 +2669,21 @@ function viewStats(){
     data-sort="${jump}"><div class="k">${k}</div>
     <div class="v">${v}${icon || ""}<small>${sub}</small></div></button>`;
 
-  // shotgun mulligans get their own row shape: name, total, then which holes.
-  // The team-name column is dropped here — the row tint already carries that,
-  // and the holes list needs the room a lot more than a repeated "KRAFT" does.
-  const body = mulligan ? mulliganStats().map((p, i) => `<tr class="${p.team}">
-    <td class="rk">${i + 1}</td>
-    <td class="nm">${esc(p.last)}</td>
-    <td class="vl">${p.total}</td>
-    <td class="hl">${p.total ? esc(p.holesTxt) : "&mdash;"}</td></tr>`).join("")
-  : sorted.map((p, i) => `<tr class="${p.team}">
+  const body = sorted.map((p, i) => `<tr class="${p.team}">
     <td class="rk">${i + 1}</td>
     <td class="nm">${esc(p.last)}</td>
     <td class="tm">${p.team === "s" ? "Kraft" : "Heinz"}</td>
     <td class="vl">${shown(p)}</td></tr>`).join("");
 
   const options = Object.keys(STATS).map(k =>
-    `<option value="${k}"${k === key ? " selected" : ""}>${STATS[k].lbl}</option>`).join("")
-    + `<option value="mulligans"${mulligan ? " selected" : ""}>Shotgun mulligans (Round 3)</option>`;
+    `<option value="${k}"${k === key ? " selected" : ""}>${STATS[k].lbl}</option>`).join("");
 
-  const mvpNote = (key === "mvp" || key === "points") ? `<div class="legend"><b>How MVP is decided.</b>
-    Every match win is worth 1 point and a halved match &frac12;. In the four 2v2 rounds
-    both partners are credited the side's full point &mdash; they won it together.
-    The MVP is the man with the most points <b>on the winning team</b>.
-    <br><b>Tie-break:</b> best net holes won &mdash; holes won minus holes lost, in match
-    play, counting 2v2 rounds the same way points do (both partners share the credit).</div>` : "";
+  const mvpNote = key === "mvp" ? `<div class="legend"><b>How MVP is decided.</b>
+    The MVP is the man with the most holes won <b>on the winning team</b> &mdash; in the four
+    2v2 rounds both partners are credited for every hole their side wins, since they won it
+    together.
+    <br><b>Tie-break:</b> best net holes &mdash; holes won minus holes lost, counting 2v2
+    rounds the same way (both partners share the credit) &mdash; then best net score to par.</div>` : "";
 
   return `<div class="topbar">
       <button class="iconbtn" data-nav="home">&#8592;</button>
@@ -2704,7 +2695,7 @@ function viewStats(){
           <div class="k">${best && best.decided ? "MVP" : "MVP so far"}${trophySVG()}</div>
           <div class="v">${best ? esc(best.name) : "&mdash;"}
           <small>${best
-            ? `${fmtPt(best.points)} point${best.points === 1 ? "" : "s"} for the
+            ? `${best.holesWon} hole${best.holesWon === 1 ? "" : "s"} won for the
                ${best.team === "s" ? "Kraft" : "Heinz"} &middot; tie-break: ${best.netHoles > 0 ? "+" : ""}${best.netHoles} net hole${
                Math.abs(best.netHoles) === 1 ? "" : "s"}`
             : "Decided once one team is ahead"}</small></div></button>
@@ -2722,16 +2713,11 @@ function viewStats(){
         <label for="statsel">Show</label>
         <select id="statsel" class="statsel">${options}</select>
       </div>
-      <div class="gridwrap"><table class="sl">${mulligan
-        ? `<thead><tr><th class="rk"></th><th class="nm">Player</th>
-             <th class="vl">Total</th><th class="hl">Holes</th></tr></thead>` : ""
-        }<tbody>${body}</tbody></table>
-        ${mulligan ? `<div class="legend">Every shotgun mulligan taken in Round 3 (Shamble),
-          tallied per player straight off the hole-by-hole tap counter. Repeats on the same
-          hole are folded in, e.g. <b>5 (2x)</b> means two mulligans on hole 5.</div>` : `<div class="legend">Each man's own scores from best ball, shamble and singles.
+      <div class="gridwrap"><table class="sl"><tbody>${body}</tbody></table>
+        <div class="legend">Each man's own scores from best ball, shamble and singles.
           On scramble and alternate shot the team's score counts for both partners, and a
           picked-up ball (X) counts as double par. <b>Gross</b> is what he actually made;
-          <b>Net</b> applies his strokes.</div>`}
+          <b>Net</b> applies his strokes.</div>
         ${mvpNote}
       </div>
       <button class="btn ghost" data-nav="home">Back to home</button>
@@ -2809,7 +2795,7 @@ function viewTeeConfirm(r, m, sc){
       ${navBtnsHTML()}
     </div><div class="wrap">
       <div class="lockbar"><b>Before hole 1:</b> ${mine
-        ? "confirm each player's tee. This sets his course handicap for the round."
+        ? "confirm each player's tee. This sets the player's course handicap for the round."
         : `Waiting for ${esc(PLAYERS[sc.id].n)} to confirm tees.`}</div>
       ${rows}
       ${mine ? `<button class="btn big" data-confirmtees="${m.id}" style="margin-top:6px">
@@ -2820,7 +2806,8 @@ function viewMatch(){
   const {r, m} = ALL_MATCHES[V.matchId], c = COURSES[r.course];
   const scores = Store.scores(m.id), st = matchState(r, m, scores);
   const h = V.hole, editable = canScore(m), sc = Store.scorer(m.id), par = c.par[h];
-  if (r.mode !== "team" && sc && sc.id && !Store.teesConfirmed(m.id) && !matchBegun(m.id))
+  const teesEditable = r.mode !== "team" && sc && sc.id && !matchBegun(m.id);
+  if (teesEditable && (!Store.teesConfirmed(m.id) || V.editTees))
     return viewTeeConfirm(r, m, sc);
 
   // You can't run ahead of the card: the first hole without a result is as far
@@ -2889,6 +2876,8 @@ function viewMatch(){
         Signed off by ${esc(PLAYERS[Store.submittedBy(m.id)] ? PLAYERS[Store.submittedBy(m.id)].n : "a commissioner")}.
         ${Session.admin ? `<button data-unsubmit="${m.id}">Reopen &rsaquo;</button>` : "Scores are locked."}</div>`
         : scorerBar(m, sc)}
+      ${teesEditable && sc.id === Session.id ? `<div class="lockbar" style="margin-top:-2px">
+        Tees confirmed. <button data-edittees="1">Edit tees &rsaquo;</button></div>` : ""}
       <div class="holehead">
         <div class="holenav">
           <button class="navbtn" data-step="-1" ${h === 0 ? "disabled" : ""}>&#8592;</button>
@@ -2999,9 +2988,16 @@ function holeVerdict(r, m, h, scores){
          : x === 3 ? "a Triple Bogey" : `a ${x} over par`;
   };
   const par = COURSES[r.course].par[h];
-  if (s.net === d.net)
+  if (s.net === d.net){
+    // A small, work-appropriate nod to the brands — one per hole, picked
+    // deterministically so it doesn't flicker between renders of the same hole.
+    const TIE_LINES = ["square as a bottle of Heinz Ketchup", "even as two halves of a Kraft Single",
+      "level as a fresh block of Philadelphia", "tied up like a Lunchables tray",
+      "balanced as a box of Kraft Mac &amp; Cheese"];
+    const tie = TIE_LINES[h % TIE_LINES.length];
     return {w:null, html:`<b>${esc(nm("s"))}</b> and <b>${esc(nm("d"))}</b> halved
-      Hole ${h + 1} with ${term(s.gross, par)}`};
+      Hole ${h + 1} with ${term(s.gross, par)} &mdash; ${tie}`};
+  }
   const w = s.net < d.net ? "s" : "d", l = w === "s" ? "d" : "s";
   const win = w === "s" ? s : d;
   return {w, html:`<b class="win ${w}">${esc(nm(w))}</b> beat ${esc(nm(l))} on Hole ${h + 1}
@@ -3644,6 +3640,11 @@ function playSandbag(from){
   playScene({svg: sandbagSVG(), line: "You sandbagging son of a bitch", ms: 7200,
     sub: `Gross birdie or better${fromTag(from)}`});
 }
+/* Birdie or better, either team. */
+function playPhillyGood(who, from){
+  playScene({svg: `<img src="philly-boy.png" alt="">`, line: "That's Really Philly Good", ms: 5200,
+    sub: `${esc(who)} &middot; birdie or better${fromTag(from)}`});
+}
 /* The clinching point lands — a quick fireworks flash naming whichever side
    just took the Outing, on every phone, regardless of side. */
 /* Plain toast — was a full-screen fireworks/podium scene. New visuals to
@@ -3723,22 +3724,31 @@ function scheduleHoleSettle(r, m, h){
  * Kept separate from playing it so the scorer's own phone and every other
  * phone in the field decide identically — the two paths can't drift.
  */
-/* Disabled — was turkey/hambone/sitting-duck streak call-outs, Big Bird/Blind
-   Duck eagle alerts, and the sandbagger birdie shade. Returning no events here
-   silences every trigger site (afterHoleComplete's own-hole playback and
-   broadcastFieldEvents' cross-match broadcast) without touching either. New
-   visuals to come later; this is a deliberate no-op, not dead code to prune. */
+/* Turkey/hambone/sitting-duck streak call-outs, Big Bird/Blind Duck eagle
+   alerts, and the sandbagger birdie shade are retired. The one event left is
+   the Philly Boy birdie-or-better call-out — gross birdie or better, either
+   team, no streaks or duck/astronaut theming involved. */
 function holeEvents(r, m, h){
-  return [];
+  const scores = Store.scores(m.id);
+  const hs = holeScores(r, m, h, scores);
+  const par = COURSES[r.course].par[h];
+  const evs = [];
+  if (r.mode === "team"){
+    ["s","d"].forEach(k => {
+      const v = hs[k]; if (!v || v.picked) return;
+      if (v.gross - par <= -1) evs.push({kind: "phillygood", who: m[k].p.map(p => last(p[0])).join(" / ")});
+    });
+  } else {
+    for (const id in hs){
+      const v = hs[id]; if (!v || v.picked) continue;
+      if (v.gross - par <= -1) evs.push({kind: "phillygood", who: PLAYERS[id].n});
+    }
+  }
+  return evs;
 }
 /** Render one descriptor. `from` names the match when it isn't your own. */
 function playHoleEvent(ev, from){
-  if (ev.kind === "turkey")    return playTurkey(ev.names, from);
-  if (ev.kind === "hambone")   return playHambone(ev.names, from);
-  if (ev.kind === "sitting")   return playSittingDuck(ev.names, from);
-  if (ev.kind === "bigbird")   return playBigDuck(ev.who, ev.how, from);
-  if (ev.kind === "blindduck") return playBlindDuck(ev.who, ev.how, from);
-  if (ev.kind === "sandbag")   return playSandbag(from);
+  if (ev.kind === "phillygood") return playPhillyGood(ev.who, from);
 }
 
 function afterHoleComplete(r, m, h, verdict){
@@ -4250,7 +4260,7 @@ function wire(){
     if (n === "event") V.view = "event";
     if (n === "round"){ V.view = "round"; V.round = +el.dataset.i; }
     if (n === "match"){
-      V.view = "match"; V.matchId = el.dataset.id;
+      V.view = "match"; V.matchId = el.dataset.id; V.editTees = false;
       const {r, m} = ALL_MATCHES[V.matchId];
       V.round = ROUNDS.indexOf(r);
       // land on the first hole still missing a score, not on the close-out hole,
@@ -4416,9 +4426,14 @@ function wire(){
   if (claim) claim.onclick = () => { Store.setScorer(claim.dataset.claim, Session.id); render(); };
   document.querySelectorAll("[data-teefor]").forEach(el => { if (el.disabled) return;
     el.onchange = () => Store.setPlayerTee(el.dataset.teefor, el.value, Session.id); });
+  const editTees = document.querySelector("[data-edittees]");
+  if (editTees) editTees.onclick = () => { V.editTees = true; render(); };
   const confirmTees = document.querySelector("[data-confirmtees]");
   if (confirmTees) confirmTees.onclick = () => {
-    Store.setTeesConfirmed(confirmTees.dataset.confirmtees, Session.id); render();
+    const mId = confirmTees.dataset.confirmtees, firstTime = !Store.teesConfirmed(mId);
+    Store.setTeesConfirmed(mId, Session.id);
+    V.editTees = false; render();
+    if (firstTime) showToast("Good luck out there &mdash; may your day go smoother than a jar of Heinz Mayo.");
   };
   // hand the card to a named player straight from the briefing
   document.querySelectorAll("[data-give]").forEach(el => el.onclick = () => {
