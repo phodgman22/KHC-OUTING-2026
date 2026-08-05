@@ -2532,8 +2532,8 @@ function profileCardHTML(id){
       ${p.admin ? `<div class="padmin">ADMIN ACCESS</div>` : ""}
       <div class="pfacts">
         ${fact("Handicap", fmtIdx(p.idx))}
-        ${fact("Gross to Par", toPar(stats.grossToPar))}
-        ${fact("Net to Par", toPar(stats.netToPar))}
+        ${fact("Gross to Par", stats ? toPar(stats.grossToPar) : "&mdash;")}
+        ${fact("Net to Par", stats ? toPar(stats.netToPar) : "&mdash;")}
       </div>
     </div>`;
 }
