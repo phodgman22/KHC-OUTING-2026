@@ -576,9 +576,17 @@ input,textarea{font-family:inherit}
   box-shadow:0 0 0 3px rgba(14,18,22,.09)!important}
 .gsin.blank{border:1.5px dashed var(--line);background:transparent}
 /* Sits outside the score box so it stays visible on top of a circled birdie. */
-.gsdots{position:absolute;top:-3px;right:-3px;display:flex;gap:2px;pointer-events:none}
+.gsdots{position:absolute;top:-3px;right:-3px;display:flex;flex-wrap:wrap;gap:2px;
+  max-width:16px;justify-content:flex-end;pointer-events:none}
 .gsdots .dot{width:6px;height:6px;border-radius:50%;background:var(--red);
   box-shadow:0 0 0 2px var(--surface)}
+.gsdots .dot.c2{background:#c9a227}
+.dotlegend{display:flex;align-items:center;gap:5px;flex-wrap:wrap;font-size:11px;
+  color:var(--muted);font-weight:650;margin:-2px 0 10px}
+.dotlegend .dot{width:7px;height:7px;border-radius:50%;background:var(--red);
+  flex:none;margin-left:9px}
+.dotlegend .dot:first-child{margin-left:0}
+.dotlegend .dot.c2{background:#c9a227}
 .entry .out{flex:1;text-align:right;font-size:11px;color:var(--dim);font-weight:650}
 .entry .out b{display:block;font-size:17px;color:var(--text);font-weight:800;line-height:1.15}
 /* Two clearly-labelled actions. Previously an unlabelled X and a ↺ arrow, which
@@ -1038,25 +1046,52 @@ function strokesOn(allowance, strokeIndex){
 }
 
 /* ---- handicap engine ----------------------------------------------------
-   Computed live from the player's raw index, his own tee choice (picked in
-   his account sheet — see Store.playerTee()/setPlayerTee()), and one
-   admin-controlled percentage of course handicap the format allows, via the
-   standard formula:
+   Two competitions run off the same gross scores with two different playing
+   handicaps, both at a locked 100% allowance, both capped at 18 strokes:
      Course Handicap = Index × (Slope / 113) + (Rating − Par)
-     Playing Handicap = Course Handicap × allowance %
-   Changing any of these recalculates instantly; nothing is baked into the
-   round/match data. See Store.settings()/setSettings() and the admin panel
-   in viewSheet() for the allowance %. */
+     Competition 1 (Ryder Cup match play): playing handicap = a player's own
+       course handicap minus the LOWEST course handicap in his foursome (his
+       match) — the low man in that group of four plays scratch.
+     Competition 2 (foursome stroke play): playing handicap = a player's own
+       course handicap minus the LOWEST course handicap across the ENTIRE
+       field playing that round — the low man in the whole event plays
+       scratch.
+   Both are computed live from each player's own tee choice (Store.playerTee()
+   /setPlayerTee()); nothing is baked into the round/match data. */
 function coursePar(c){ return c.par.reduce((a, b) => a + b, 0); }
 function courseHandicap(idx, c, tee){
   const t = c.tees[tee] || c.tees[Object.keys(c.tees)[0]];   // fall back if the tee is missing
   return Math.round(idx * (t.slope / 113) + (t.rating - coursePar(c)));
 }
-/** A player's playing handicap for this round — the number `strokesOn()`
-    allocates across the 18 holes by stroke index. */
+/** The match (foursome) a player is teeing off in this round, or null if
+    he isn't in one — used to find "the lowest in his group" for Comp 1. */
+function matchOf(r, id){
+  return r.matches.find(m => matchPlayerIds(r, m).includes(id)) || null;
+}
+/** Every player teeing off in this round, across every match — used to find
+    "the lowest in the field" for Comp 2. */
+function fieldPlayerIds(r){
+  const ids = new Set();
+  r.matches.forEach(m => matchPlayerIds(r, m).forEach(id => ids.add(id)));
+  return [...ids];
+}
+/** Shared shape for both competitions: a player's own course handicap minus
+    the lowest course handicap among a given pool of players, floored at 0
+    (nobody owes strokes) and capped at 18 (this event's max). */
+function relativeAllowance(r, id, pool){
+  const c = COURSES[r.course];
+  const ch = pid => courseHandicap(PLAYERS[pid].idx, c, Store.playerTee(pid));
+  const min = Math.min(...pool.map(ch));
+  return Math.min(18, Math.max(0, ch(id) - min));
+}
+/** Competition 1 — playing handicap for the Ryder Cup match play. This is
+    the name every existing match-play call site already uses, so redefining
+    it here is the whole of Competition 1's implementation; nothing else in
+    the match-play pipeline (playerStrokes, holeScores, matchState,
+    standings, playerStats) needs to change. */
 function liveAllowance(r, id){
-  const c = COURSES[r.course], s = Store.settings();
-  return Math.round(courseHandicap(PLAYERS[id].idx, c, Store.playerTee(id)) * s.pct);
+  const m = matchOf(r, id);
+  return relativeAllowance(r, id, m ? matchPlayerIds(r, m) : [id]);
 }
 function playerStrokes(r, side, pl, h){
   const c = COURSES[r.course];
@@ -1066,21 +1101,35 @@ function playerStrokes(r, side, pl, h){
 }
 function teamStrokes(r, side, h){ return strokesOn(side.net, COURSES[r.course].hcp[h]); }
 
+/** Competition 2 — playing handicap for the foursome stroke play: relative
+    to the lowest course handicap across the whole field playing this round. */
+function comp2Allowance(r, id){ return relativeAllowance(r, id, fieldPlayerIds(r)); }
+function comp2PlayerStrokes(r, pl, h){
+  const c = COURSES[r.course];
+  return strokesOn(comp2Allowance(r, pl[0]), c.hcp[h]);
+}
+
 /**
  * Everyone's number on one hole, with picked-up balls ("X") resolved.
  *
  * A pick-up scores double par — except when double par would actually win the
  * hole, which would reward walking in. In that case he takes one more than the
  * worst score in the group, so a pick-up can never help his side.
+ *
+ * Parameterized on which competition's strokes to apply — Competition 1
+ * (match play, teamStrokes/playerStrokes) and Competition 2 (foursome stroke
+ * play, comp2PlayerStrokes) score the exact same gross entries under two
+ * different handicaps, so the pick-up resolution has to run once per
+ * competition rather than being shared off one set of nets.
  */
-function holeScores(r, m, h, scores){
+function holeScoresFor(r, m, h, scores, strokesFn){
   const c = COURSES[r.course], par = c.par[h], row = scores[h] || {};
   const ents = [];
   if (r.mode === "team"){
     ["s","d"].forEach(k => ents.push({id:k, side:k, raw: row[k], strokes: teamStrokes(r, m[k], h)}));
   } else {
     ["s","d"].forEach(k => m[k].p.forEach(pl =>
-      ents.push({id: pl[0], side: k, raw: row[pl[0]], strokes: playerStrokes(r, m[k], pl, h)})));
+      ents.push({id: pl[0], side: k, raw: row[pl[0]], strokes: strokesFn(m[k], pl)})));
   }
   const realNets = ents.filter(e => typeof e.raw === "number").map(e => e.raw - e.strokes);
   const best = realNets.length ? Math.min(...realNets) : null;
@@ -1099,6 +1148,27 @@ function holeScores(r, m, h, scores){
     }
   });
   return out;
+}
+function holeScores(r, m, h, scores){
+  return holeScoresFor(r, m, h, scores, (side, pl) => playerStrokes(r, side, pl, h));
+}
+/** Competition 2's version of holeScores — same gross entries, the foursome
+    stroke-play handicap instead of the match-play one. */
+function comp2HoleScores(r, m, h, scores){
+  return holeScoresFor(r, m, h, scores, (side, pl) => comp2PlayerStrokes(r, pl, h));
+}
+/** A foursome's Competition 2 total so far: the lowest net among its four
+    players on every hole entered, summed stroke-play style (lower wins). */
+function comp2FoursomeTotal(r, m, scores){
+  const c = COURSES[r.course];
+  let total = 0, par = 0, thru = 0;
+  for (let h = 0; h < 18; h++){
+    if (!holeEntered(r, m, h, scores)) continue;
+    const nets = Object.values(comp2HoleScores(r, m, h, scores)).map(v => v.net);
+    if (!nets.length) continue;
+    total += Math.min(...nets); par += c.par[h]; thru++;
+  }
+  return {total, par, toPar: total - par, thru};
 }
 
 /**
@@ -1853,8 +1923,16 @@ function yards(r, m, h){
   if (parts.length === 2) return `${c.yds[parts[0]][h]}/${c.yds[parts[1]][h]} yds`;
   return null;
 }
-const dotsHTML = n => n <= 0 ? "" :
-  `<span class="gsdots">${'<span class="dot"></span>'.repeat(n)}</span>`;
+/** One dot per stroke, colour-coded by which competition it's for — red for
+    the Ryder Cup match play (Comp 1), gold for the foursome stroke play
+    (Comp 2). A hole can carry a stroke for one, the other, both, or neither. */
+const dotsHTML = (n1, n2) => {
+  n1 = n1 || 0; n2 = n2 || 0;
+  if (n1 <= 0 && n2 <= 0) return "";
+  const d1 = '<span class="dot c1"></span>'.repeat(n1);
+  const d2 = '<span class="dot c2"></span>'.repeat(n2);
+  return `<span class="gsdots">${d1}${d2}</span>`;
+};
 
 /* ==========================================================================
    7. RENDER
@@ -2275,6 +2353,36 @@ const syncHTML = () => Store.writeErr
       Store.online ? "Live &middot; synced to every phone" : "Offline &middot; saved here, will sync"
     }</span></div>`;
 
+/* ---------- Competition 2: foursome stroke play ----------
+   Every foursome (the same four who play Competition 1 together) stands as
+   its own team here, ranked on total strokes relative to par — the lowest
+   net score of the foursome on each hole, summed stroke-play style. */
+function comp2Standings(){
+  const rows = [];
+  ROUNDS.forEach(r => r.matches.forEach(m => {
+    if (r.mode === "team") return;   // Comp 2 only applies to individual-format rounds
+    const stat = comp2FoursomeTotal(r, m, Store.scores(m.id));
+    rows.push({r, m, ...stat, names: matchPlayerIds(r, m).map(id => last(id)).join(" / ")});
+  }));
+  rows.sort((a, b) => (b.thru > 0) - (a.thru > 0) || a.toPar - b.toPar || b.thru - a.thru);
+  return rows;
+}
+function comp2BoardHTML(){
+  const rows = comp2Standings();
+  if (!rows.length) return `<div class="empty">No foursomes yet.</div>`;
+  const body = rows.map((row, i) => `<button class="card" data-nav="match" data-id="${row.m.id}">
+    <div class="rowline">
+      <div class="rnum">${i + 1}</div>
+      <div class="rmeta"><div class="t1">${esc(row.names)}</div>
+        <div class="t2">${row.thru ? `thru ${row.thru}` : "not started"}</div></div>
+      <div class="rright"><div class="big mono">${row.thru ? toPar(row.toPar) : "&mdash;"}</div></div>
+      <div class="chev">&rsaquo;</div>
+    </div></button>`).join("");
+  return `<div class="legend" style="margin-bottom:10px;border:none;padding:0">
+      Each foursome's best net score on every hole entered, added up stroke-play
+      style against every other foursome in the round &mdash; lower is better.</div>${body}`;
+}
+
 /* ---------- leaderboard (Ryder Cup style) ----------
    Deliberately different from All Matches: this is a board you read, not a
    menu you navigate. Each row puts a side on the left, a side on the right,
@@ -2323,11 +2431,20 @@ function viewBoard(){
         ${roundBadge(sum)}</div>
       <div class="lbtally">${tally}</div>${rows}</div>`;
   });
+  const tab = V.boardTab === "comp2" ? "comp2" : "comp1";
+  const tabBtn = (key, label) => `<button data-boardtab="${key}" style="flex:1;padding:10px;
+    border-radius:10px;font-weight:750;font-size:13px;border:1px solid var(--line);
+    background:${tab === key ? "var(--text)" : "var(--surface)"};
+    color:${tab === key ? "#fff" : "var(--text)"}">${label}</button>`;
   return `<div class="topbar">
       <button class="iconbtn" data-nav="home">&#8592;</button>
-      <h1>Leaderboard<div class="sub">Kraft vs Heinz &middot; ${fmtPt(CLINCH)} to clinch</div></h1>
+      <h1>Leaderboard<div class="sub">${tab === "comp2" ? "Foursome Stroke Play"
+        : `Kraft vs Heinz &middot; ${fmtPt(CLINCH)} to clinch`}</div></h1>
       ${navBtnsHTML()}</div>
-    <div class="wrap">${boardHTML(st)}${tiebreakHTML()}${out}${syncHTML()}</div>`;
+    <div class="wrap">
+      <div style="display:flex;gap:8px;margin-bottom:14px">${tabBtn("comp1", "Ryder Cup")}${tabBtn("comp2", "Stroke Play")}</div>
+      ${tab === "comp2" ? comp2BoardHTML() : `${boardHTML(st)}${tiebreakHTML()}${out}${syncHTML()}`}
+    </div>`;
 }
 
 /* ---------- chat ----------
@@ -2798,8 +2915,56 @@ function viewTeeConfirm(r, m, sc){
         ? "confirm each player's tee. This sets the player's course handicap for the round."
         : `Waiting for ${esc(PLAYERS[sc.id].n)} to confirm tees.`}</div>
       ${rows}
-      ${mine ? `<button class="btn big" data-confirmtees="${m.id}" style="margin-top:6px">
-        Continue to Scoring &rsaquo;</button>` : ""}
+      ${mine ? `<button class="btn big" data-reviewstrokes="${m.id}" style="margin-top:6px">
+        Review Strokes &rsaquo;</button>` : ""}
+    </div>`;
+}
+/** Every hole a player gets a stroke on, under a given playing handicap —
+    a plain list, one entry per stroke (a hole could in principle carry two,
+    though the 18-cap on both competitions this event uses means that never
+    actually happens here). */
+function strokeHoleList(allowance, c){
+  const holes = [];
+  for (let h = 0; h < 18; h++){
+    const n = strokesOn(allowance, c.hcp[h]);
+    for (let i = 0; i < n; i++) holes.push(h + 1);
+  }
+  return holes;
+}
+/** Shown once tees are picked, before any score can be entered — the two
+    competitions run different handicaps off the same tee choice, so this is
+    the one place a player can see both stroke allocations side by side and
+    catch a wrong tee before it matters. */
+function viewStrokeSummary(r, m, sc){
+  const c = COURSES[r.course], mine = sc.id === Session.id;
+  const rows = matchPlayerIds(r, m).map(id => {
+    const p = PLAYERS[id];
+    const a1 = liveAllowance(r, id), a2 = comp2Allowance(r, id);
+    const h1 = strokeHoleList(a1, c), h2 = strokeHoleList(a2, c);
+    return `<div class="card flat" style="margin-bottom:9px">
+      <div style="font-weight:800;font-size:14px">${esc(p.n)}
+        <span style="color:var(--dim);font-weight:650;font-size:12px">&middot; ${esc(Store.playerTee(id))} tees</span></div>
+      <div style="margin-top:8px;font-size:12.5px;color:var(--muted);line-height:1.7">
+        <span class="dot c1" style="display:inline-block;width:7px;height:7px;border-radius:50%;
+          background:var(--red);margin-right:3px"></span> <b style="color:var(--text)">Ryder Cup:</b> ${a1} stroke${a1 === 1 ? "" : "s"}${
+          h1.length ? ` &mdash; hole${h1.length === 1 ? "" : "s"} ${h1.join(", ")}` : ""}<br>
+        <span class="dot c2" style="display:inline-block;width:7px;height:7px;border-radius:50%;
+          background:#c9a227;margin-right:3px"></span> <b style="color:var(--text)">Foursome Stroke Play:</b> ${a2} stroke${a2 === 1 ? "" : "s"}${
+          h2.length ? ` &mdash; hole${h2.length === 1 ? "" : "s"} ${h2.join(", ")}` : ""}
+      </div>
+    </div>`;
+  }).join("");
+  return `<div class="topbar">
+      <button class="iconbtn" data-nav="round" data-i="${ROUNDS.indexOf(r)}">&#8592;</button>
+      <h1>Strokes Summary<div class="sub">${esc(c.n)}</div></h1>
+      ${navBtnsHTML()}
+    </div><div class="wrap">
+      <div class="lockbar">Confirm this looks right before scores start.</div>
+      ${rows}
+      ${mine ? `<div class="actions">
+        <button class="btn big ghost" data-backtotees="1">&lsaquo; Back to tees</button>
+        <button class="btn big" data-startscoring="${m.id}">Start Scoring &rsaquo;</button>
+      </div>` : `<div class="lockbar">Waiting for ${esc(PLAYERS[sc.id].n)} to start scoring.</div>`}
     </div>`;
 }
 function viewMatch(){
@@ -2807,8 +2972,10 @@ function viewMatch(){
   const scores = Store.scores(m.id), st = matchState(r, m, scores);
   const h = V.hole, editable = canScore(m), sc = Store.scorer(m.id), par = c.par[h];
   const teesEditable = r.mode !== "team" && sc && sc.id && !matchBegun(m.id);
-  if (teesEditable && (!Store.teesConfirmed(m.id) || V.editTees))
-    return viewTeeConfirm(r, m, sc);
+  if (teesEditable){
+    if (V.showStrokeSummary) return viewStrokeSummary(r, m, sc);
+    if (!Store.teesConfirmed(m.id) || V.editTees) return viewTeeConfirm(r, m, sc);
+  }
 
   // You can't run ahead of the card: the first hole without a result is as far
   // as anyone may go. Everything behind it stays open for corrections.
@@ -2842,7 +3009,7 @@ function viewMatch(){
       rows.push(entryRow({
         name: PLAYERS[pl[0]].n, sub: shotLbl(liveAllowance(r, pl[0])),
         entrant: pl[0], raw: row[pl[0]], gross: hs[pl[0]] ? hs[pl[0]].gross : null,
-        strokes: playerStrokes(r, side, pl, h), par, editable,
+        strokes: playerStrokes(r, side, pl, h), strokes2: comp2PlayerStrokes(r, pl, h), par, editable,
         best: !!(bh && bh.byId === pl[0] && side.p.length > 1),
         showMulligan: !!mulRow, mulliganCount: mulRow ? (mulRow[pl[0]] || 0) : 0}));
     });
@@ -2888,6 +3055,8 @@ function viewMatch(){
         </div>
         <div class="strip">${strip}</div>
       </div>
+      <div class="dotlegend"><span class="dot c1"></span> Ryder Cup stroke
+        <span class="dot c2"></span> Foursome stroke-play stroke</div>
       ${sideBox("s")}${sideBox("d")}
       <div class="holebar">
         <button class="go ${h === 17 || V.fromCard ? "fin" : ""}" data-proceed="1"
@@ -3641,9 +3810,10 @@ function playSandbag(from){
     sub: `Gross birdie or better${fromTag(from)}`});
 }
 /* Birdie or better, either team. */
-function playPhillyGood(who, from){
+function playPhillyGood(entries, from){
+  const list = entries.map(e => `${esc(e.who)} &mdash; ${e.term}`).join(" &middot; ");
   playScene({svg: `<img src="philly-boy.png" alt="">`, line: "That's Really Philly Good", ms: 5200,
-    sub: `${esc(who)} &middot; birdie or better${fromTag(from)}`});
+    sub: `${list}${fromTag(from)}`});
 }
 /* The clinching point lands — a quick fireworks flash naming whichever side
    just took the Outing, on every phone, regardless of side. */
@@ -3728,27 +3898,36 @@ function scheduleHoleSettle(r, m, h){
    alerts, and the sandbagger birdie shade are retired. The one event left is
    the Philly Boy birdie-or-better call-out — gross birdie or better, either
    team, no streaks or duck/astronaut theming involved. */
+/** The actual name for a birdie-or-better gross score — null if it's only a
+    par or worse, which also doubles as the qualifying check. */
+function birdieTermWord(gross, par){
+  const x = gross - par;
+  return x <= -3 ? "Albatross" : x === -2 ? "Eagle" : x === -1 ? "Birdie" : null;
+}
 function holeEvents(r, m, h){
   const scores = Store.scores(m.id);
   const hs = holeScores(r, m, h, scores);
   const par = COURSES[r.course].par[h];
-  const evs = [];
+  const entries = [];
   if (r.mode === "team"){
     ["s","d"].forEach(k => {
       const v = hs[k]; if (!v || v.picked) return;
-      if (v.gross - par <= -1) evs.push({kind: "phillygood", who: m[k].p.map(p => last(p[0])).join(" / ")});
+      const term = birdieTermWord(v.gross, par);
+      if (term) entries.push({who: m[k].p.map(p => last(p[0])).join(" / "), term});
     });
   } else {
     for (const id in hs){
       const v = hs[id]; if (!v || v.picked) continue;
-      if (v.gross - par <= -1) evs.push({kind: "phillygood", who: PLAYERS[id].n});
+      const term = birdieTermWord(v.gross, par);
+      if (term) entries.push({who: PLAYERS[id].n, term});
     }
   }
-  return evs;
+  // One event for the whole hole, not one per player — see playPhillyGood.
+  return entries.length ? [{kind: "phillygood", entries}] : [];
 }
 /** Render one descriptor. `from` names the match when it isn't your own. */
 function playHoleEvent(ev, from){
-  if (ev.kind === "phillygood") return playPhillyGood(ev.who, from);
+  if (ev.kind === "phillygood") return playPhillyGood(ev.entries, from);
 }
 
 function afterHoleComplete(r, m, h, verdict){
@@ -3938,7 +4117,7 @@ function entryRow(o){
           data-entrant="${o.entrant}" type="${picked ? "text" : "number"}"
           inputmode="numeric" pattern="[0-9]*" min="1" max="15" value="${val}"
           ${o.editable && !picked ? "" : "readonly"}>
-        ${dotsHTML(o.strokes)}
+        ${dotsHTML(o.strokes, o.strokes2)}
       </span>
       ${o.showMulligan ? `<span class="mully" id="mully-${o.entrant}">
         <button class="mystep" data-mully="${o.entrant}" data-dir="-1"
@@ -4102,27 +4281,6 @@ function viewCard(){
     </div>`;
 }
 
-/** Admin-only: which tee counts for rating/slope, and what percentage of
-    course handicap the format allows. Locks the moment any match has a score
-    in it — see anyMatchBegun(). Andrew's call: no live mid-round toggle, the
-    only way to change it after scoring starts is Reset ALL matches. */
-function formatSettingsHTML(){
-  const s = Store.settings(), locked = anyMatchBegun();
-  const pctOpts = [100, 95, 90, 85, 80, 75].map(p => `<option value="${p}"${
-    Math.round(s.pct * 100) === p ? " selected" : ""}>${p}% of course handicap</option>`).join("");
-  return `<div class="sect" style="margin-top:4px">Format settings</div>
-    <p style="margin-bottom:10px;color:var(--muted);font-size:12.5px;line-height:1.55">
-      Drives the handicap engine for every player, every match. ${locked
-        ? `<b style="color:var(--text)">Locked</b> &mdash; scoring has started.
-           Reset ALL matches (below) to change it.`
-        : "Set this before anyone starts scoring."}
-    </p>
-    <div class="fmtrow">
-      <label for="fmtpct">Allowance</label>
-      <select id="fmtpct" class="statsel" ${locked ? "disabled" : ""}>${pctOpts}</select>
-    </div>`;
-}
-
 /* ---------- menu ---------- */
 function viewSheet(){
   if (V.sheet !== "menu") return "";
@@ -4143,7 +4301,10 @@ function viewSheet(){
       <div class="mcv mono">${Session.me.code}</div>
       <div class="mch">Write this down. It's how you get back in if you're ever signed out.</div></div>
     ${codes}
-    ${Session.admin ? formatSettingsHTML() : ""}
+    ${Session.admin ? `<div class="sect" style="margin-top:4px">Handicap allowance</div>
+      <p style="margin-bottom:10px;color:var(--muted);font-size:12.5px;line-height:1.55">
+        Locked at 100% for this event &mdash; both competitions play every stroke a
+        player's handicap earns relative to the low man in his group.</p>` : ""}
     ${Session.admin ? `<div class="sect" style="margin-top:4px">Backup</div>
       <p style="margin-bottom:10px">Downloads every score, scorecard and chat message as a
       single file. If anything is ever lost, load that file back and it restores &mdash;
@@ -4203,13 +4364,6 @@ function viewEventOverview(){
       attempt at closest to the pin &mdash; ball must be on the green to count &mdash; and
       the single closest ball wins the Cup for his team.</p>
 
-    <div class="sect">Buy-In &amp; Side Games</div>
-    <p>The <b style="color:var(--text)">$130 buy-in</b> covers all 3 Long Drive / Closest
-      to the Pin contests. Each pays <b style="color:var(--text)">$100</b> to the individual
-      winner, plus <b style="color:var(--text)">$200</b> to every player on the winning
-      team. Long Drives must land in the fairway to count; Closest to the Pin must finish
-      on the green.</p>
-
     <div class="sect">Getting There</div>
     <p><b style="color:var(--text)">Day 1:</b> Arrive at Cedar River no later than 1:00 PM.
       Everyone is staying at the Cedar River property and playing that course for Round 1.
@@ -4260,7 +4414,7 @@ function wire(){
     if (n === "event") V.view = "event";
     if (n === "round"){ V.view = "round"; V.round = +el.dataset.i; }
     if (n === "match"){
-      V.view = "match"; V.matchId = el.dataset.id; V.editTees = false;
+      V.view = "match"; V.matchId = el.dataset.id; V.editTees = false; V.showStrokeSummary = false;
       const {r, m} = ALL_MATCHES[V.matchId];
       V.round = ROUNDS.indexOf(r);
       // land on the first hole still missing a score, not on the close-out hole,
@@ -4299,6 +4453,8 @@ function wire(){
     el.onclick = () => { V.sheet = el.dataset.sheet; render(); });
   document.querySelectorAll("[data-sort]").forEach(el =>
     el.onclick = () => { V.statSort = el.dataset.sort; render(); window.scrollTo(0, 0); });
+  document.querySelectorAll("[data-boardtab]").forEach(el =>
+    el.onclick = () => { V.boardTab = el.dataset.boardtab; render(); });
   const sel = document.getElementById("statsel");
   if (sel) sel.onchange = () => { V.statSort = sel.value; render(); };
 
@@ -4427,12 +4583,16 @@ function wire(){
   document.querySelectorAll("[data-teefor]").forEach(el => { if (el.disabled) return;
     el.onchange = () => Store.setPlayerTee(el.dataset.teefor, el.value, Session.id); });
   const editTees = document.querySelector("[data-edittees]");
-  if (editTees) editTees.onclick = () => { V.editTees = true; render(); };
-  const confirmTees = document.querySelector("[data-confirmtees]");
-  if (confirmTees) confirmTees.onclick = () => {
-    const mId = confirmTees.dataset.confirmtees, firstTime = !Store.teesConfirmed(mId);
+  if (editTees) editTees.onclick = () => { V.editTees = true; V.showStrokeSummary = false; render(); };
+  const reviewStrokes = document.querySelector("[data-reviewstrokes]");
+  if (reviewStrokes) reviewStrokes.onclick = () => { V.showStrokeSummary = true; render(); window.scrollTo(0, 0); };
+  const backToTees = document.querySelector("[data-backtotees]");
+  if (backToTees) backToTees.onclick = () => { V.showStrokeSummary = false; V.editTees = true; render(); };
+  const startScoring = document.querySelector("[data-startscoring]");
+  if (startScoring) startScoring.onclick = () => {
+    const mId = startScoring.dataset.startscoring, firstTime = !Store.teesConfirmed(mId);
     Store.setTeesConfirmed(mId, Session.id);
-    V.editTees = false; render();
+    V.editTees = false; V.showStrokeSummary = false; render();
     if (firstTime) showToast("Good luck out there &mdash; may your day go smoother than a jar of Heinz Mayo.");
   };
   // hand the card to a named player straight from the briefing
@@ -4491,11 +4651,6 @@ function wire(){
     showToast(`All ${MATCH_COUNT} match${MATCH_COUNT === 1 ? "" : "es"} reset to a clean slate`);
   };
 
-  const fmtPct = document.querySelector("#fmtpct");
-  if (fmtPct) fmtPct.onchange = () => {
-    Store.setSettings({pct: (+fmtPct.value) / 100}, Session.id);
-    showToast(`Allowance set to ${fmtPct.value}%`);
-  };
   /* --- gross score inputs -------------------------------------------------
      Writes are "silent" (no re-render) so the keyboard stays open and the
      caret doesn't jump. The derived numbers are patched in place instead. */
