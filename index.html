@@ -1063,25 +1063,51 @@ function courseHandicap(idx, c, tee){
   const t = c.tees[tee] || c.tees[Object.keys(c.tees)[0]];   // fall back if the tee is missing
   return Math.round(idx * (t.slope / 113) + (t.rating - coursePar(c)));
 }
-/** The match (foursome) a player is teeing off in this round, or null if
-    he isn't in one — used to find "the lowest in his group" for Comp 1. */
+/* ---- performance & safety at 50+ players live at once --------------------
+   liveAllowance/comp2Allowance run on every render, for every player, for
+   every hole shown — leaderboard and stats screens loop all of that across
+   every match. Three things make that cheap instead of recomputing from
+   scratch tens of thousands of times a render:
+     - matchOf/fieldPlayerIds are cached permanently — foursome assignments
+       never change once ROUNDS is set, reset or no reset.
+     - each player's own course handicap is cached per (id, tee) pair — a
+       pure function of idx/course/tee, so it can never go stale even though
+       a player's CHOSEN tee can change mid-event; changing tee just adds a
+       new cache entry under the new key.
+     - a player id that doesn't match anyone in PLAYERS (a roster typo,
+       most likely once the real 50-person list gets typed in) is treated as
+       scratch (0) rather than throwing — one bad id must never take down
+       the render for every connected phone. */
+const _matchOfCache = new Map();
 function matchOf(r, id){
-  return r.matches.find(m => matchPlayerIds(r, m).includes(id)) || null;
+  if (_matchOfCache.has(id)) return _matchOfCache.get(id);
+  const m = r.matches.find(mm => matchPlayerIds(r, mm).includes(id)) || null;
+  _matchOfCache.set(id, m);
+  return m;
 }
-/** Every player teeing off in this round, across every match — used to find
-    "the lowest in the field" for Comp 2. */
+let _fieldIdsCache = null;
 function fieldPlayerIds(r){
+  if (_fieldIdsCache) return _fieldIdsCache;
   const ids = new Set();
   r.matches.forEach(m => matchPlayerIds(r, m).forEach(id => ids.add(id)));
-  return [...ids];
+  return (_fieldIdsCache = [...ids]);
+}
+const _chCache = new Map();
+function safeCourseHandicap(id, c, tee){
+  const p = PLAYERS[id];
+  if (!p){ console.warn(`Unknown player id in handicap lookup: ${id}`); return 0; }
+  const key = id + "|" + tee;
+  let v = _chCache.get(key);
+  if (v === undefined){ v = courseHandicap(p.idx, c, tee); _chCache.set(key, v); }
+  return v;
 }
 /** Shared shape for both competitions: a player's own course handicap minus
     the lowest course handicap among a given pool of players, floored at 0
     (nobody owes strokes) and capped at 18 (this event's max). */
 function relativeAllowance(r, id, pool){
   const c = COURSES[r.course];
-  const ch = pid => courseHandicap(PLAYERS[pid].idx, c, Store.playerTee(pid));
-  const min = Math.min(...pool.map(ch));
+  const ch = pid => safeCourseHandicap(pid, c, Store.playerTee(pid));
+  const min = pool.length ? Math.min(...pool.map(ch)) : 0;
   return Math.min(18, Math.max(0, ch(id) - min));
 }
 /** Competition 1 — playing handicap for the Ryder Cup match play. This is
