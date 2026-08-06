@@ -939,33 +939,74 @@ const BUILD = "2026-07-31.4";      // must match version.txt — that's what pho
 const PICKED = "X";                // sentinel for a picked-up ball
 
 /* ==========================================================================
-   2. DATA  (from Pat's "KHC Outing Scoring File")
+   2. DATA  (from "KHC Golf Groups_2026 Outing" — Groups tab)
    ========================================================================== */
-// PLACEHOLDER ROSTER — dummy names/handicaps for testing. Replace with the
-// real Player Checklist data (names, idx, room, yrs, codes) before the event.
+// Real roster: 54 players across 14 foursomes (groups 1A/1B..7A/7B), each
+// pair sharing a shotgun starting hole. idx:0 for anyone marked "X" (no
+// handicap submitted) per Pat's instruction — they can self-verify/update
+// their index at tee-confirmation on the day of the event.
 const PLAYERS = {
-  player1: {n:"Pat Hodgman", t:"s", idx:5.0,  room:1, yrs:1, code:"P001", admin:true},
-  player2: {n:"Player 2",  t:"s", idx:8.0,  room:1, yrs:1, code:"P002"},
-  player3: {n:"Player 3",  t:"s", idx:12.0, room:1, yrs:1, code:"P003"},
-  player4: {n:"Player 4",  t:"s", idx:15.0, room:1, yrs:1, code:"P004"},
-  player5: {n:"Player 5",  t:"s", idx:3.0,  room:1, yrs:1, code:"P005"},
-  player6: {n:"Player 6",  t:"s", idx:20.0, room:1, yrs:1, code:"P006"},
-  player7: {n:"Player 7",  t:"s", idx:9.0,  room:1, yrs:1, code:"P007"},
-  player8: {n:"Player 8",  t:"s", idx:11.0, room:1, yrs:1, code:"P008"},
-  player9: {n:"Player 9",  t:"s", idx:17.0, room:1, yrs:1, code:"P009"},
-  player10:{n:"Player 10", t:"s", idx:6.0,  room:1, yrs:1, code:"P010"},
-  player11:{n:"Player 11", t:"d", idx:14.0, room:1, yrs:1, code:"P011"},
-  player12:{n:"Player 12", t:"d", idx:4.0,  room:1, yrs:1, code:"P012"},
-  player13:{n:"Player 13", t:"d", idx:22.0, room:1, yrs:1, code:"P013"},
-  player14:{n:"Player 14", t:"d", idx:10.0, room:1, yrs:1, code:"P014"},
-  player15:{n:"Player 15", t:"d", idx:7.0,  room:1, yrs:1, code:"P015"},
-  player16:{n:"Player 16", t:"d", idx:18.0, room:1, yrs:1, code:"P016"},
-  player17:{n:"Player 17", t:"d", idx:13.0, room:1, yrs:1, code:"P017"},
-  player18:{n:"Player 18", t:"d", idx:25.0, room:1, yrs:1, code:"P018"},
-  player19:{n:"Player 19", t:"d", idx:16.0, room:1, yrs:1, code:"P019"},
-  player20:{n:"Player 20", t:"d", idx:9.5,  room:1, yrs:1, code:"P020"}
+  amaya:     {n:"Nicolas Amaya",   t:"s", idx:0,  room:1, yrs:1, code:"P001"},
+  schaab:    {n:"Zach Schaab",     t:"s", idx:15, room:1, yrs:1, code:"P002"},
+  hunter:    {n:"Reid Hunter",     t:"d", idx:13, room:1, yrs:1, code:"P003"},
+  connolly:  {n:"Jac Connolly",    t:"d", idx:2,  room:1, yrs:1, code:"P004"},
+  stephens:  {n:"Brett Stephens",  t:"s", idx:6,  room:1, yrs:1, code:"P005"},
+  kelly:     {n:"Zach Kelly",      t:"s", idx:15, room:1, yrs:1, code:"P006"},
+  shaw:      {n:"Patrick Shaw",    t:"d", idx:20, room:1, yrs:1, code:"P007"},
+  deckert:   {n:"Andrew Deckert",  t:"d", idx:0,  room:1, yrs:1, code:"P008"},
+  vandenbos: {n:"Joe Vanden Bos",  t:"s", idx:12, room:1, yrs:1, code:"P009"},
+  gideon:    {n:"John Gideon",     t:"s", idx:5,  room:1, yrs:1, code:"P010"},
+  lafata:    {n:"Joe Lafata",      t:"d", idx:5,  room:1, yrs:1, code:"P011"},
+  friesen:   {n:"Connor Friesen",  t:"d", idx:11, room:1, yrs:1, code:"P012"},
+  calvo:     {n:"Patricio Calvo",  t:"s", idx:12, room:1, yrs:1, code:"P013"},
+  assalone:  {n:"Nicholas Assalone",t:"s",idx:14, room:1, yrs:1, code:"P014"},
+  trambley:  {n:"Lily Trambley",   t:"d", idx:0,  room:1, yrs:1, code:"P015"},
+  small:     {n:"Amy Small",       t:"d", idx:34, room:1, yrs:1, code:"P016"},
+  hendel:    {n:"Haley Hendel",    t:"s", idx:34, room:1, yrs:1, code:"P017"},
+  crowell:   {n:"Kara Crowell",    t:"s", idx:31, room:1, yrs:1, code:"P018"},
+  hodgman:   {n:"Pat Hodgman",     t:"d", idx:7,  room:1, yrs:1, code:"P019", admin:true},
+  kluga:     {n:"James Kluga",     t:"d", idx:15, room:1, yrs:1, code:"P020"},
+  drews:     {n:"Nichol Drews",    t:"s", idx:0,  room:1, yrs:1, code:"P021"},
+  kaiser:    {n:"Ashley Kaiser",   t:"s", idx:0,  room:1, yrs:1, code:"P022"},
+  altit:     {n:"Steffany Altit",  t:"d", idx:0,  room:1, yrs:1, code:"P023"},
+  viola:     {n:"Lauren Viola",    t:"d", idx:0,  room:1, yrs:1, code:"P024"},
+  isom:      {n:"Grant Isom",      t:"s", idx:26, room:1, yrs:1, code:"P025"},
+  maulding:  {n:"Nathan Maulding", t:"s", idx:19, room:1, yrs:1, code:"P026"},
+  shaller:   {n:"Joseph Shaller",  t:"d", idx:22, room:1, yrs:1, code:"P027"},
+  millman:   {n:"Ian Millman",     t:"d", idx:0,  room:1, yrs:1, code:"P028"},
+  kampfer:   {n:"Kevin Kampfer",   t:"s", idx:22, room:1, yrs:1, code:"P029"},
+  millet:    {n:"Edward Millet",   t:"s", idx:18, room:1, yrs:1, code:"P030"},
+  maung:     {n:"Andrew Maung",    t:"d", idx:5,  room:1, yrs:1, code:"P031"},
+  lister:    {n:"Jake Lister",     t:"s", idx:0,  room:1, yrs:1, code:"P032"},
+  lang:      {n:"Connor Lang",     t:"s", idx:7,  room:1, yrs:1, code:"P033"},
+  kapoor:    {n:"Ronit Kapoor",    t:"d", idx:26, room:1, yrs:1, code:"P034"},
+  gross:     {n:"Jonah Gross",     t:"d", idx:23, room:1, yrs:1, code:"P035"},
+  margulis:  {n:"Dan Margulis",    t:"s", idx:16, room:1, yrs:1, code:"P036"},
+  evins:     {n:"Jake Evins",      t:"s", idx:22, room:1, yrs:1, code:"P037"},
+  leey:      {n:"Young Lee",       t:"d", idx:0,  room:1, yrs:1, code:"P038"},
+  oconnor:   {n:"Jack O'Connor",   t:"d", idx:20, room:1, yrs:1, code:"P039"},
+  day:       {n:"Scott Day",       t:"s", idx:0,  room:1, yrs:1, code:"P040"},
+  dayton:    {n:"Andrew Dayton",   t:"s", idx:9,  room:1, yrs:1, code:"P041"},
+  thompson:  {n:"Jack Thompson",   t:"d", idx:16, room:1, yrs:1, code:"P042"},
+  coyle:     {n:"Jared Coyle",     t:"d", idx:0,  room:1, yrs:1, code:"P043"},
+  smith:     {n:"Jesse Smith",     t:"s", idx:0,  room:1, yrs:1, code:"P044"},
+  margulies: {n:"Wyatt Margulies", t:"d", idx:19, room:1, yrs:1, code:"P045"},
+  slack:     {n:"Ryan Slack",      t:"d", idx:0,  room:1, yrs:1, code:"P046"},
+  bralis:    {n:"Tom Bralis",      t:"s", idx:0,  room:1, yrs:1, code:"P047"},
+  fenner:    {n:"Brandon Fenner",  t:"s", idx:7,  room:1, yrs:1, code:"P048"},
+  glod:      {n:"Jeremy Glod",     t:"d", idx:0,  room:1, yrs:1, code:"P049"},
+  leej:      {n:"Jack Lee",        t:"d", idx:7,  room:1, yrs:1, code:"P050"},
+  beck:      {n:"Ethan Beck",      t:"s", idx:8,  room:1, yrs:1, code:"P051"},
+  mcdade:    {n:"Conor McDade",    t:"s", idx:0,  room:1, yrs:1, code:"P052"},
+  spaeth:    {n:"Grant Spaeth",    t:"d", idx:0,  room:1, yrs:1, code:"P053"},
+  thursby:   {n:"Harley Thursby",  t:"d", idx:0,  room:1, yrs:1, code:"P054"}
 };
-const last = id => PLAYERS[id].n.split(" ").slice(-1)[0];
+const MULTIWORD_SURNAMES = ["Vanden Bos"];
+const last = id => {
+  const n = PLAYERS[id].n;
+  const hit = MULTIWORD_SURNAMES.find(s => n.endsWith(s));
+  return hit || n.split(" ").slice(-1)[0];
+};
 
 // From the Port-Scorecard: Harborside International Golf Center, Port Course, par 72.
 const COURSES = {
@@ -987,20 +1028,31 @@ const COURSES = {
 };
 const DEFAULT_TEE = "Regular";
 
-/* One format, per Andrew: best ball, two-team match play. Five placeholder
-   matches to exercise the engine — real roster and tee times replace these.
-   Each player tuple is just [id] now; the handicap engine below computes his
-   allowance live from PLAYERS[id].idx and the admin-selected tee/percentage,
-   so there's nothing else to bake in here per player. */
+/* Shotgun start, per the Groups tab: 14 foursomes paired up A/B on 7 starting
+   holes (1A & 1B both start hole 1 and go off one after the other, etc).
+   Two seats ("Open Spot") are unfilled — those matches carry just one
+   player on that side; sideHole/holeEntered/etc. already tolerate a side
+   with fewer than two players. Each player tuple is just [id] now; the
+   handicap engine below computes his allowance live from PLAYERS[id].idx
+   and the admin-selected tee/percentage. */
 const ROUNDS = [
 { n:1, day:"August 12, 2026", course:"course1", tee:DEFAULT_TEE, mode:"indiv", fmt:"Best Ball",
   rule:"Course handicap relative to the lowest in the foursome, 100% allowance",
   matches:[
-  {id:"r1m1", t:"12:30 PM", sh:1, s:{p:[["player7"],["player10"]]}, d:{p:[["player13"],["player15"]]}},
-  {id:"r1m2", t:"12:30 PM", sh:2, s:{p:[["player1"],["player4"]]},  d:{p:[["player19"],["player11"]]}},
-  {id:"r1m3", t:"12:30 PM", sh:3, s:{p:[["player5"],["player9"]]},  d:{p:[["player14"],["player18"]]}},
-  {id:"r1m4", t:"12:30 PM", sh:4, s:{p:[["player8"],["player6"]]},  d:{p:[["player12"],["player16"]]}},
-  {id:"r1m5", t:"12:30 PM", sh:5, s:{p:[["player2"],["player3"]]},  d:{p:[["player20"],["player17"]]}}]}
+  {id:"r1m1",  t:"Shotgun", sh:1, s:{p:[["amaya"],["schaab"]]},     d:{p:[["hunter"],["connolly"]]}},
+  {id:"r1m2",  t:"Shotgun", sh:1, s:{p:[["stephens"],["kelly"]]},   d:{p:[["shaw"],["deckert"]]}},
+  {id:"r1m3",  t:"Shotgun", sh:2, s:{p:[["vandenbos"],["gideon"]]}, d:{p:[["lafata"],["friesen"]]}},
+  {id:"r1m4",  t:"Shotgun", sh:2, s:{p:[["calvo"],["assalone"]]},   d:{p:[["trambley"],["small"]]}},
+  {id:"r1m5",  t:"Shotgun", sh:3, s:{p:[["hendel"],["crowell"]]},   d:{p:[["hodgman"],["kluga"]]}},
+  {id:"r1m6",  t:"Shotgun", sh:3, s:{p:[["drews"],["kaiser"]]},     d:{p:[["altit"],["viola"]]}},
+  {id:"r1m7",  t:"Shotgun", sh:4, s:{p:[["isom"],["maulding"]]},    d:{p:[["shaller"],["millman"]]}},
+  {id:"r1m8",  t:"Shotgun", sh:4, s:{p:[["kampfer"],["millet"]]},   d:{p:[["maung"]]}},
+  {id:"r1m9",  t:"Shotgun", sh:5, s:{p:[["lister"],["lang"]]},      d:{p:[["kapoor"],["gross"]]}},
+  {id:"r1m10", t:"Shotgun", sh:5, s:{p:[["margulis"],["evins"]]},   d:{p:[["leey"],["oconnor"]]}},
+  {id:"r1m11", t:"Shotgun", sh:6, s:{p:[["day"],["dayton"]]},       d:{p:[["thompson"],["coyle"]]}},
+  {id:"r1m12", t:"Shotgun", sh:6, s:{p:[["smith"]]}, d:{p:[["margulies"],["slack"]]}},
+  {id:"r1m13", t:"Shotgun", sh:7, s:{p:[["bralis"],["fenner"]]},    d:{p:[["glod"],["leej"]]}},
+  {id:"r1m14", t:"Shotgun", sh:7, s:{p:[["beck"],["mcdade"]]},      d:{p:[["spaeth"],["thursby"]]}}]}
 ];
 
 /* Side contests — none configured yet for this event; add per hole once
@@ -1108,7 +1160,7 @@ function relativeAllowance(r, id, pool){
   const c = COURSES[r.course];
   const ch = pid => safeCourseHandicap(pid, c, Store.playerTee(pid));
   const min = pool.length ? Math.min(...pool.map(ch)) : 0;
-  return Math.min(18, Math.max(0, ch(id) - min));
+  return Math.max(0, ch(id) - min);   // no cap — strokesOn() already gives a hole a second stroke past 18
 }
 /** Competition 1 — playing handicap for the Ryder Cup match play. This is
     the name every existing match-play call site already uses, so redefining
@@ -2244,7 +2296,7 @@ function viewMatches(){
   });
   return `<div class="topbar">
       <button class="iconbtn" data-nav="home">&#8592;</button>
-      <h1>All Matches<div class="sub">${MATCH_COUNT} matches across 5 rounds</div></h1>
+      <h1>All Matches<div class="sub">${MATCH_COUNT} matches across ${ROUNDS.length} round${ROUNDS.length === 1 ? "" : "s"}</div></h1>
       ${navBtnsHTML()}</div>
     <div class="wrap"><div class="sect">Rounds</div>${rounds}
       <button class="btn ghost" data-nav="board">Leaderboard</button></div>`;
@@ -3002,9 +3054,9 @@ function viewTeeConfirm(r, m, sc){
     </div>`;
 }
 /** Every hole a player gets a stroke on, under a given playing handicap —
-    a plain list, one entry per stroke (a hole could in principle carry two,
-    though the 18-cap on both competitions this event uses means that never
-    actually happens here). */
+    a plain list, one entry per stroke. A high enough relative handicap
+    gives the lowest stroke-index holes a second stroke, so a hole number
+    can appear twice here (strokesOn() is what actually allocates it). */
 function strokeHoleList(allowance, c){
   const holes = [];
   for (let h = 0; h < 18; h++){
