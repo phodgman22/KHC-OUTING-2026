@@ -1013,17 +1013,27 @@ const COURSES = {
   course1: {n:"Harborside International Golf Center · Port Course",
     par:[4,5,4,3,4,3,4,4,5, 4,5,4,3,4,3,4,4,5],
     hcp:[9,1,11,15,5,17,13,7,3, 12,2,8,18,14,16,4,10,6],
+    /* Combo and both Women's ratings are from the same Port-Scorecard, under
+       its "Women" rating/slope block (Forward and the women's Regular row) —
+       Women's Regular plays the same white markers as the men's Regular, just
+       rated differently for handicap purposes, so it reuses that yardage set.
+       Combo has no published per-hole yardage on the card, only a 6258-yard
+       total, so yards() just won't have anything to show for it — same
+       graceful fallback already used for any tee missing from `yds`. */
     tees:{
       Tournament:   {rating:74.6, slope:137},
       Championship: {rating:72.1, slope:131},
+      Combo:        {rating:70.5, slope:128},
       Regular:      {rating:69.2, slope:125},
-      Forward:      {rating:70.3, slope:125}
+      Forward:      {rating:70.3, slope:125, women:true},
+      "Women's Regular": {rating:74.8, slope:135, women:true}
     },
     yds:{
       Tournament:   [423,544,402,232,466,180,408,430,575, 401,560,455,152,361,216,389,407,522],
       Championship: [390,511,374,207,428,145,376,401,542, 375,537,419,125,331,192,359,375,502],
       Regular:      [346,479,337,179,388,115,341,365,485, 351,493,378,116,293,169,324,337,481],
-      Forward:      [309,432,298,125,332,83,298,312,429, 305,445,331,78,260,134,286,291,416]
+      Forward:      [309,432,298,125,332,83,298,312,429, 305,445,331,78,260,134,286,291,416],
+      "Women's Regular": [346,479,337,179,388,115,341,365,485, 351,493,378,116,293,169,324,337,481]
     }}
 };
 const DEFAULT_TEE = "Regular";
@@ -1089,12 +1099,18 @@ const CLINCH_FIREWORKS_MS = 3200;   // the quick flash before the (Kraft-only) p
 /* ==========================================================================
    3. SCORING ENGINE  (gross in -> everything else derived)
    ========================================================================== */
+/* Standard USGA allocation, generalized past the old 2-stroke ceiling: a
+   hole gets a first stroke once allowance reaches its stroke index, a
+   second once allowance passes 18 + that index, a third past 36 + that
+   index, and so on. With the 18-cap on relativeAllowance() gone (some real
+   players' relative allowance now runs past 36 — a high-index player on a
+   high-slope tee, playing against a scratch-marked field), a hole's hardest
+   player needs to be able to pick up a 3rd+ stroke, not get silently capped
+   at 2 while the strokes summary header still reports the true, higher
+   allowance number. */
 function strokesOn(allowance, strokeIndex){
-  if (!allowance || allowance <= 0) return 0;
-  let s = 0;
-  if (strokeIndex <= allowance) s++;
-  if (strokeIndex <= allowance - 18) s++;
-  return s;
+  if (!allowance || allowance < strokeIndex) return 0;
+  return Math.floor((allowance - strokeIndex) / 18) + 1;
 }
 
 /* ---- handicap engine ----------------------------------------------------
@@ -1148,9 +1164,10 @@ const _chCache = new Map();
 function safeCourseHandicap(id, c, tee){
   const p = PLAYERS[id];
   if (!p){ console.warn(`Unknown player id in handicap lookup: ${id}`); return 0; }
-  const key = id + "|" + tee;
-  let v = _chCache.get(key);
-  if (v === undefined){ v = courseHandicap(p.idx, c, tee); _chCache.set(key, v); }
+  const idx = Store.playerIdx(id);
+  const key = id + "|" + tee + "|" + idx;   // idx is now a live, player-editable override —
+  let v = _chCache.get(key);                // keying on it keeps a changed index from ever
+  if (v === undefined){ v = courseHandicap(idx, c, tee); _chCache.set(key, v); }  // reading stale
   return v;
 }
 /** Shared shape for both competitions: a player's own course handicap minus
@@ -1480,10 +1497,13 @@ const Store = (() => {
   const LS = `${EVENT_KEY}_data`, LS_CHAT = `${EVENT_KEY}_chat`, LS_SEEN = `${EVENT_KEY}_chatseen`;
   const LS_TIE = `${EVENT_KEY}_tie`, LS_SETTINGS = `${EVENT_KEY}_settings`;
   const LS_PTEE = `${EVENT_KEY}_playertees`;
+  const LS_PIDX = `${EVENT_KEY}_playeridx`;
   const DEFAULT_SETTINGS = {pct: 0.85};
   let data = {}, chatData = {}, chatSeen = {}, tie = null, settings = {...DEFAULT_SETTINGS};
   let playerTees = {};   // {playerId: {tee, by, t}} — each player picks their own, newest-wins
   try { playerTees = JSON.parse(localStorage.getItem(LS_PTEE) || "{}"); } catch(e){ playerTees = {}; }
+  let playerIdxs = {};   // {playerId: {idx, by, t}} — self-reported handicap override, newest-wins
+  try { playerIdxs = JSON.parse(localStorage.getItem(LS_PIDX) || "{}"); } catch(e){ playerIdxs = {}; }
   try { tie = JSON.parse(localStorage.getItem(LS_TIE) || "null"); } catch(e){ tie = null; }
   try { settings = {...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem(LS_SETTINGS) || "{}")}; }
   catch(e){ settings = {...DEFAULT_SETTINGS}; }
@@ -1647,6 +1667,23 @@ const Store = (() => {
       try { localStorage.setItem(LS_PTEE, JSON.stringify(playerTees)); } catch(e){}
       this._emit();
       if (db) track(update(ref(db, `${EVENT_KEY}/playerTees/${id}`), playerTees[id]));
+    },
+
+    /* ---- player handicap index ---------------------------------------------
+       Several players in the real roster came in with no submitted index
+       ("X" on the Groups sheet, defaulted to 0 in PLAYERS) or one that's
+       stale by event day. Same override pattern as playerTee — a player's
+       PLAYERS[id].idx is the fallback, this is the newest-wins correction
+       on top of it, editable from tee confirmation. */
+    playerIdx(id){
+      const p = playerIdxs[id];
+      return (p && typeof p.idx === "number") ? p.idx : (PLAYERS[id] ? PLAYERS[id].idx : 0);
+    },
+    setPlayerIdx(id, idx, by){
+      playerIdxs[id] = {idx, by, t: now()};
+      try { localStorage.setItem(LS_PIDX, JSON.stringify(playerIdxs)); } catch(e){}
+      this._emit();
+      if (db) track(update(ref(db, `${EVENT_KEY}/playerIdx/${id}`), playerIdxs[id]));
     },
 
     scorer(id){ return (data[id] || {}).scorer || null; },
@@ -1892,6 +1929,17 @@ const Store = (() => {
             if (!cur || v.t > cur.t) playerTees[id] = v;
           }
           try { localStorage.setItem(LS_PTEE, JSON.stringify(playerTees)); } catch(e){}
+          this._emit();
+        }, () => {});
+        onValue(ref(db, `${EVENT_KEY}/playerIdx`), snap => {
+          const all = snap.val() || {};
+          for (const id in all){
+            const v = all[id];
+            if (!v || typeof v.t !== "number" || typeof v.idx !== "number") continue;
+            const cur = playerIdxs[id];
+            if (!cur || v.t > cur.t) playerIdxs[id] = v;
+          }
+          try { localStorage.setItem(LS_PIDX, JSON.stringify(playerIdxs)); } catch(e){}
           this._emit();
         }, () => {});
         onValue(ref(db, `${EVENT_KEY}/chat`), snap => {
@@ -2752,7 +2800,7 @@ function profileCardHTML(id){
         p.title ? ` &middot; ${esc(p.title.toUpperCase())}` : ""}</div>
       ${p.admin ? `<div class="padmin">ADMIN ACCESS</div>` : ""}
       <div class="pfacts">
-        ${fact("Handicap", fmtIdx(p.idx))}
+        ${fact("Handicap", fmtIdx(Store.playerIdx(id)))}
         ${fact("Gross to Par", stats ? toPar(stats.grossToPar) : "&mdash;")}
         ${fact("Net to Par", stats ? toPar(stats.netToPar) : "&mdash;")}
       </div>
@@ -2803,13 +2851,13 @@ function viewProfile(){
   ["s","d"].forEach(t => {
     roster += `<div class="sect">${t === "s" ? "Kraft" : "Heinz"}</div>`;
     Object.keys(PLAYERS).filter(id => PLAYERS[id].t === t)
-      .sort((a,b) => PLAYERS[a].idx - PLAYERS[b].idx)
+      .sort((a,b) => Store.playerIdx(a) - Store.playerIdx(b))
       .forEach(id => {
         const q = PLAYERS[id];
         roster += `<button class="card ${id === Session.id ? "me" : ""}" data-profile="${id}">
           <div class="rowline">${avatarSVG(id, "sm")}
           <div class="rmeta"><div class="t1">${esc(q.n)}${q.admin ? ` <span class="cmsh">ADMIN</span>` : ""}</div>
-            <div class="t2">Index ${fmtIdx(q.idx)}</div></div>
+            <div class="t2">Index ${fmtIdx(Store.playerIdx(id))}</div></div>
           <div class="chev">&rsaquo;</div></div></button>`;
       });
   });
@@ -3034,11 +3082,17 @@ function viewTeeConfirm(r, m, sc){
   const c = COURSES[r.course], mine = sc.id === Session.id;
   const tees = Object.keys(c.tees);
   const rows = matchPlayerIds(r, m).map(id => {
-    const p = PLAYERS[id], cur = Store.playerTee(id);
-    const opts = tees.map(t => `<option value="${esc(t)}"${cur === t ? " selected" : ""}>${esc(t)}</option>`).join("");
-    return `<div class="fmtrow"><label>${esc(p.n)} <span style="color:var(--dim)">&middot; ${
-      p.t === "s" ? "Kraft" : "Heinz"}</span></label>
-      <select class="statsel teeconfirm" data-teefor="${id}" ${mine ? "" : "disabled"}>${opts}</select></div>`;
+    const p = PLAYERS[id], cur = Store.playerTee(id), curIdx = Store.playerIdx(id);
+    const opts = tees.map(t => `<option value="${esc(t)}"${cur === t ? " selected" : ""}>${esc(t)}${
+      c.tees[t].women ? " (Women's)" : ""}</option>`).join("");
+    return `<div class="fmtrow" style="flex-direction:column;align-items:stretch;gap:7px">
+      <label>${esc(p.n)} <span style="color:var(--dim)">&middot; ${
+        p.t === "s" ? "Kraft" : "Heinz"}</span></label>
+      <div style="display:flex;gap:8px">
+        <select class="statsel teeconfirm" data-teefor="${id}" ${mine ? "" : "disabled"}>${opts}</select>
+        <input class="statsel idxconfirm" style="flex:0 0 84px;text-align:center" type="number" step="0.1"
+          inputmode="decimal" data-idxfor="${id}" value="${curIdx}" ${mine ? "" : "disabled"} title="Handicap index">
+      </div></div>`;
   }).join("");
   return `<div class="topbar">
       <button class="iconbtn" data-nav="round" data-i="${ROUNDS.indexOf(r)}">&#8592;</button>
@@ -3046,7 +3100,7 @@ function viewTeeConfirm(r, m, sc){
       ${navBtnsHTML()}
     </div><div class="wrap">
       <div class="lockbar"><b>Before hole 1:</b> ${mine
-        ? "confirm each player's tee. This sets the player's course handicap for the round."
+        ? "confirm each player's tee and handicap index. Anyone who hasn't submitted a handicap yet can enter it here — this sets the player's course handicap for the round."
         : `Waiting for ${esc(PLAYERS[sc.id].n)} to confirm tees.`}</div>
       ${rows}
       ${mine ? `<button class="btn big" data-reviewstrokes="${m.id}" style="margin-top:6px">
@@ -4438,7 +4492,7 @@ function viewSheet(){
   return `<div class="sheet" data-close="1"><div class="sheet-in">
     <div class="sheethdr"><h3>${esc(Session.me.n)}</h3>
       <button class="iconbtn" data-closebtn="1">&times;</button></div>
-    <p>${Session.me.t === "s" ? "Kraft" : "Heinz"} &middot; Index ${fmtIdx(Session.me.idx)}${
+    <p>${Session.me.t === "s" ? "Kraft" : "Heinz"} &middot; Index ${fmtIdx(Store.playerIdx(Session.id))}${
       Session.me.title ? " &middot; " + esc(Session.me.title) : ""}<br>
       ${Store.online ? "Live sync is on." : "Offline &mdash; scores save here and sync when you get service."}<br>
       <span style="color:var(--dim)">Version ${BUILD}</span></p>
@@ -4698,6 +4752,11 @@ function wire(){
   if (claim) claim.onclick = () => { Store.setScorer(claim.dataset.claim, Session.id); render(); };
   document.querySelectorAll("[data-teefor]").forEach(el => { if (el.disabled) return;
     el.onchange = () => Store.setPlayerTee(el.dataset.teefor, el.value, Session.id); });
+  document.querySelectorAll("[data-idxfor]").forEach(el => { if (el.disabled) return;
+    el.onchange = () => {
+      const v = parseFloat(el.value);
+      Store.setPlayerIdx(el.dataset.idxfor, Number.isFinite(v) ? v : 0, Session.id);
+    }; });
   const editTees = document.querySelector("[data-edittees]");
   if (editTees) editTees.onclick = () => { V.editTees = true; V.showStrokeSummary = false; render(); };
   const reviewStrokes = document.querySelector("[data-reviewstrokes]");
